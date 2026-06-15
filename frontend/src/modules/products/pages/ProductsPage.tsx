@@ -5,6 +5,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { productsApi } from '@/services/products';
 import { productSchema, type ProductFormData } from '../schemas/product';
 import type { Product } from '@/types';
+import { 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Loader2, 
+  AlertCircle
+} from 'lucide-react';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import Toast from '@/components/Toast';
+import SearchInput from '@/components/SearchInput';
+import Pagination from '@/components/Pagination';
+import Modal from '@/components/Modal';
+import { useToast } from '@/hooks/useToast';
+import { formatPrice, inputStyle } from '@/lib/utils';
 
 const PRICING_TYPES: Record<Product['pricing_type'], string> = {
   fixed: 'Valor Fixo',
@@ -18,8 +32,9 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const { message: successMsg, showToast } = useToast();
 
   // Queries
   const { data: productsData, isLoading, isError } = useQuery({
@@ -61,6 +76,7 @@ export default function ProductsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       showToast('Produto removido com sucesso!');
+      setDeletingProduct(null);
     },
   });
 
@@ -92,10 +108,7 @@ export default function ProductsPage() {
   // Show dimension constraints if pricing is area-based (per_m2) or user checked requires_dimensions
   const showDimensions = watchPricingType === 'per_m2' || watchRequiresDimensions;
 
-  const showToast = (msg: string) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(null), 3000);
-  };
+
 
   const openCreateModal = () => {
     setEditingProduct(null);
@@ -135,7 +148,6 @@ export default function ProductsPage() {
   };
 
   const onSubmit: SubmitHandler<ProductFormData> = async (formData) => {
-    // If we're not showing dimensions, make sure they are sent as null
     const payload: Partial<Product> = {
       name: formData.name,
       description: formData.description || null,
@@ -155,16 +167,17 @@ export default function ProductsPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir o produto ${name}?`)) {
-      await deleteMutation.mutateAsync(id);
+  const handleDelete = (product: Product) => {
+    setDeletingProduct(product);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingProduct) {
+      await deleteMutation.mutateAsync(deletingProduct.id);
     }
   };
 
-  const formatPrice = (price: string | number) => {
-    const numeric = typeof price === 'string' ? parseFloat(price) : price;
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numeric || 0);
-  };
+
 
   // Local filtering
   const filteredProducts = products.filter((product) => {
@@ -178,68 +191,60 @@ export default function ProductsPage() {
 
   if (isError) {
     return (
-      <div className="rounded-xl border border-red-800 bg-red-950/20 p-6 text-center text-red-400">
+      <div className="rounded-xl border border-red-800 bg-red-950/20 p-6 text-center text-red-400 flex items-center justify-center gap-2">
+        <AlertCircle className="h-5 w-5" />
         Ocorreu um erro ao carregar os produtos.
       </div>
     );
   }
+
+
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Produtos e Modelos</h2>
-          <p className="mt-1 text-sm text-gray-400">Gerencie a tabela de esquadrias e serviços disponíveis para orçar.</p>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight">Produtos e Modelos</h2>
+          <p className="mt-1.5 text-sm text-slate-450">Gerencie a tabela de esquadrias e serviços disponíveis para orçar.</p>
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4.5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-blue-500 shadow-md hover:shadow-blue-500/10 active:scale-[0.98] cursor-pointer"
         >
-          <span>➕</span> Novo Produto
+          <Plus className="h-4.5 w-4.5" /> Novo Produto
         </button>
       </div>
 
       {/* Success Notification */}
-      {successMsg && (
-        <div className="rounded-lg border border-green-800 bg-green-900/30 p-4 text-sm text-green-400 transition-all">
-          ✓ {successMsg}
-        </div>
-      )}
+      <Toast message={successMsg} />
 
       {/* Filters and Table */}
-      <div className="rounded-xl border border-gray-800 bg-gray-900 overflow-hidden">
+      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/30 overflow-hidden">
         {/* Toolbar */}
-        <div className="border-b border-gray-800 p-4">
-          <div className="max-w-md">
-            <label className="sr-only">Buscar produto</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">🔍</span>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nome, descrição ou linha..."
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+        <div className="border-b border-slate-800/60 p-4">
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Buscar por nome, descrição ou linha..."
+          />
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex h-48 items-center justify-center text-gray-400">
+            <div className="flex h-48 flex-col items-center justify-center gap-3 text-slate-455">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               Carregando produtos...
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center text-gray-400">
-              <p className="text-lg font-medium">Nenhum produto cadastrado</p>
-              <p className="text-sm text-gray-500">Clique em "Novo Produto" para começar.</p>
+            <div className="flex h-48 flex-col items-center justify-center text-slate-400 text-center p-6">
+              <p className="text-lg font-bold text-white">Nenhum produto cadastrado</p>
+              <p className="text-sm text-slate-500 mt-1">Clique em "Novo Produto" para começar.</p>
             </div>
           ) : (
-            <table className="w-full border-collapse text-left text-sm text-gray-300">
-              <thead className="bg-gray-950 text-xs font-semibold uppercase text-gray-400">
+            <table className="w-full border-collapse text-left text-sm text-slate-350">
+              <thead className="bg-slate-950/40 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
                 <tr>
                   <th className="px-6 py-4">Produto</th>
                   <th className="px-6 py-4">Linha Padrão</th>
@@ -250,65 +255,67 @@ export default function ProductsPage() {
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-slate-850 text-slate-300">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-850 transition-colors">
+                  <tr key={product.id} className="hover:bg-slate-800/25 transition-colors">
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium text-white">{product.name}</p>
+                        <p className="font-bold text-white">{product.name}</p>
                         {product.description && (
-                          <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{product.description}</p>
+                          <p className="text-xs text-slate-450 line-clamp-1 mt-0.5">{product.description}</p>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-xs font-semibold">
+                    <td className="px-6 py-4 text-xs font-bold">
                       {product.default_line ? (
-                        <span className="rounded bg-blue-950 border border-blue-900 px-2 py-0.5 text-blue-400">
+                        <span className="rounded-lg bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-blue-450">
                           {product.default_line.name}
                         </span>
                       ) : (
-                        <span className="text-gray-500">-</span>
+                        <span className="text-slate-600">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-xs">{PRICING_TYPES[product.pricing_type]}</td>
-                    <td className="px-6 py-4 font-mono text-sm font-semibold text-white">
+                    <td className="px-6 py-4 text-xs text-slate-400">{PRICING_TYPES[product.pricing_type]}</td>
+                    <td className="px-6 py-4 font-mono text-sm font-bold text-white">
                       {formatPrice(product.base_price)}
                     </td>
-                    <td className="px-6 py-4 text-xs">
+                    <td className="px-6 py-4 text-xs text-slate-400 leading-normal">
                       {product.requires_dimensions || product.pricing_type === 'per_m2' ? (
-                        <span className="text-gray-300">
+                        <span>
                           {product.min_width ? `Largura min: ${product.min_width}mm` : 'L: Livre'}
                           <br />
                           {product.min_height ? `Altura min: ${product.min_height}mm` : 'A: Livre'}
                         </span>
                       ) : (
-                        <span className="text-gray-500">Não exige</span>
+                        <span className="text-slate-600">Não exige</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          product.active ? 'bg-green-950 text-green-400' : 'bg-gray-800 text-gray-400'
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
+                          product.active 
+                            ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30' 
+                            : 'bg-slate-800/40 text-slate-500 border-slate-750/30'
                         }`}
                       >
                         {product.active ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1.5">
                         <button
                           onClick={() => openEditModal(product)}
-                          className="rounded p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors cursor-pointer"
+                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
                           title="Editar"
                         >
-                          ✏️
+                          <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="rounded p-1.5 text-gray-400 hover:bg-gray-800 hover:text-red-400 transition-colors cursor-pointer"
+                          onClick={() => handleDelete(product)}
+                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors cursor-pointer"
                           title="Excluir"
                         >
-                          🗑️
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -319,189 +326,171 @@ export default function ProductsPage() {
           )}
         </div>
 
-        {/* Pagination */}
-        {meta && meta.total > meta.per_page && (
-          <div className="flex items-center justify-between border-t border-gray-800 bg-gray-950 px-6 py-4">
-            <span className="text-xs text-gray-400">
-              Página <strong className="text-white">{meta.current_page}</strong> de{' '}
-              <strong className="text-white">{Math.ceil(meta.total / meta.per_page)}</strong> (
-              Total: {meta.total} )
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1 || isLoading}
-                className="rounded bg-gray-850 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:hover:bg-gray-850 cursor-pointer"
-              >
-                Anterior
-              </button>
-              <button
-                onClick={() => setCurrentPage((p) => p + 1)}
-                disabled={currentPage >= Math.ceil(meta.total / meta.per_page) || isLoading}
-                className="rounded bg-gray-850 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:hover:bg-gray-850 cursor-pointer"
-              >
-                Próximo
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={meta ? Math.ceil(meta.total / meta.per_page) : 1}
+          totalItems={meta?.total || 0}
+          isLoading={isLoading}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal/Drawer Component */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-xl border border-gray-800 bg-gray-900 p-6 shadow-2xl relative max-h-[95vh] overflow-y-auto">
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg cursor-pointer"
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingProduct ? 'Editar Produto' : 'Novo Produto'}
+        description="Cadastre as especificações, preços e dimensões padrão da esquadria."
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Nome do Produto *</label>
+            <input
+              type="text"
+              {...register('name')}
+              className={inputStyle}
+              placeholder="Ex: Portão Basculante, Janela de Correr 2 Fg"
+            />
+            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Linha de Alumínio Padrão</label>
+            <select
+              {...register('default_line_id')}
+              className={`${inputStyle} cursor-pointer`}
             >
-              ✕
-            </button>
+              <option value="">Sem linha associada</option>
+              {lines.map((line) => (
+                <option key={line.id} value={line.id} className="bg-slate-900">
+                  {line.name} {!line.active && '(Inativa)'}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <h3 className="text-lg font-bold text-white mb-1">
-              {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-            </h3>
-            <p className="text-xs text-gray-400 mb-6">
-              Cadastre as especificações, preços e dimensões padrão da esquadria.
-            </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Precificação *</label>
+              <select
+                {...register('pricing_type')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="fixed" className="bg-slate-900">Preço Fixo</option>
+                <option value="per_m2" className="bg-slate-900">Por Metro Quadrado (m²)</option>
+                <option value="per_meter" className="bg-slate-900">Por Metro Linear (m)</option>
+                <option value="per_kg" className="bg-slate-900">Por Peso (kg)</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Preço Base (R$) *</label>
+              <input
+                type="number"
+                step="0.01"
+                {...register('base_price', { valueAsNumber: true })}
+                className={inputStyle}
+                placeholder="0.00"
+              />
+              {errors.base_price && <p className="mt-1 text-xs text-red-400">{errors.base_price.message}</p>}
+            </div>
+          </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-300">Nome do Produto *</label>
-                <input
-                  type="text"
-                  {...register('name')}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Ex: Portão Basculante, Janela de Correr 2 Fg"
-                />
-                {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
-              </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Descrição Comercial</label>
+            <textarea
+              rows={2}
+              {...register('description')}
+              className={inputStyle}
+              placeholder="Ex: Modelo padrão, inclui trincos e guarnições..."
+            />
+          </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-300">Linha de Alumínio Padrão</label>
-                <select
-                  {...register('default_line_id')}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                >
-                  <option value="">Sem linha associada</option>
-                  {lines.map((line) => (
-                    <option key={line.id} value={line.id}>
-                      {line.name} {!line.active && '(Inativa)'}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="border-t border-b border-slate-850 py-4 my-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="req-dimensions"
+                {...register('requires_dimensions')}
+                className="rounded border-slate-800 bg-slate-900 text-blue-600 focus:ring-blue-500 h-4.5 w-4.5 cursor-pointer"
+              />
+              <label htmlFor="req-dimensions" className="text-xs font-bold uppercase tracking-wider text-slate-350 cursor-pointer">
+                Exige dimensões personalizadas no orçamento (Largura/Altura)
+              </label>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
+            {showDimensions && (
+              <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 animate-fade-in">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-300">Precificação *</label>
-                  <select
-                    {...register('pricing_type')}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="fixed">Preço Fixo</option>
-                    <option value="per_m2">Por Metro Quadrado (m²)</option>
-                    <option value="per_meter">Por Metro Linear (m)</option>
-                    <option value="per_kg">Por Peso (kg)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-300">Preço Base (R$) *</label>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Largura Mínima (mm)</label>
                   <input
                     type="number"
-                    step="0.01"
-                    {...register('base_price', { valueAsNumber: true })}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="0.00"
+                    {...register('min_width', { valueAsNumber: true })}
+                    className={`${inputStyle} py-1.5 px-3`}
+                    placeholder="Ex: 500"
                   />
-                  {errors.base_price && <p className="mt-1 text-xs text-red-400">{errors.base_price.message}</p>}
+                  {errors.min_width && <p className="mt-1 text-[10px] text-red-400">{errors.min_width.message}</p>}
                 </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-300">Descrição Comercial</label>
-                <textarea
-                  rows={2}
-                  {...register('description')}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Ex: Modelo padrão, inclui trincos e guarnições..."
-                />
-              </div>
-
-              <div className="border-t border-b border-gray-850 py-3 my-2 space-y-3">
-                <div className="flex items-center gap-2">
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Altura Mínima (mm)</label>
                   <input
-                    type="checkbox"
-                    id="req-dimensions"
-                    {...register('requires_dimensions')}
-                    className="rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                    type="number"
+                    {...register('min_height', { valueAsNumber: true })}
+                    className={`${inputStyle} py-1.5 px-3`}
+                    placeholder="Ex: 600"
                   />
-                  <label htmlFor="req-dimensions" className="text-xs font-semibold text-gray-300 cursor-pointer">
-                    Exige dimensões personalizadas no orçamento (Largura/Altura)
-                  </label>
+                  {errors.min_height && <p className="mt-1 text-[10px] text-red-400">{errors.min_height.message}</p>}
                 </div>
-
-                {showDimensions && (
-                  <div className="grid grid-cols-2 gap-4 bg-gray-950 p-3 rounded-lg border border-gray-850 animate-fade-in">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Largura Mínima (mm)</label>
-                      <input
-                        type="number"
-                        {...register('min_width', { valueAsNumber: true })}
-                        className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Ex: 500"
-                      />
-                      {errors.min_width && <p className="mt-1 text-[10px] text-red-400">{errors.min_width.message}</p>}
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Altura Mínima (mm)</label>
-                      <input
-                        type="number"
-                        {...register('min_height', { valueAsNumber: true })}
-                        className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Ex: 600"
-                      />
-                      {errors.min_height && <p className="mt-1 text-[10px] text-red-400">{errors.min_height.message}</p>}
-                    </div>
-                    <p className="col-span-2 text-[10px] text-gray-500 leading-normal">
-                      * Restrições ativadas: Os orçamentos bloquearão dimensões menores que o mínimo estipulado.
-                    </p>
-                  </div>
-                )}
+                <p className="col-span-2 text-[10px] text-slate-500 leading-normal">
+                  * Restrições ativadas: Os orçamentos bloquearão dimensões menores que o mínimo estipulado.
+                </p>
               </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="prod-active"
-                  {...register('active')}
-                  className="rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
-                />
-                <label htmlFor="prod-active" className="text-xs font-semibold text-gray-300 cursor-pointer">
-                  Produto ativo para novos orçamentos
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="rounded-lg bg-gray-800 hover:bg-gray-750 px-4 py-2 text-sm font-semibold text-white transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmitting ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
-        </div>
-      )}
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="prod-active"
+              {...register('active')}
+              className="rounded border-slate-800 bg-slate-900 text-blue-600 focus:ring-blue-500 h-4.5 w-4.5 cursor-pointer"
+            />
+            <label htmlFor="prod-active" className="text-xs font-bold uppercase tracking-wider text-slate-350 cursor-pointer">
+              Produto ativo para novos orçamentos
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-xl bg-blue-650 hover:bg-blue-550 px-5 py-2.5 text-sm font-bold text-white transition-all cursor-pointer shadow-md shadow-blue-950/20 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Custom Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={!!deletingProduct}
+        title="Excluir Produto"
+        description={`Tem certeza que deseja excluir o produto "${deletingProduct?.name}"? Esta ação removerá permanentemente o produto e ele não estará mais disponível para seleção em novos orçamentos.`}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeletingProduct(null)}
+        isDangerous={true}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

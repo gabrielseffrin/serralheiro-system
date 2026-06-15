@@ -88,3 +88,28 @@ Este arquivo registra decisões arquiteturais, de infraestrutura e desenvolvimen
 4. **Job de Expiração de Orçamentos:**
    - Implementado o comando Artisan `app:expire-budgets` que busca orçamentos com validade vencida nos status `sent`, `viewed` ou `negotiating` e os transiciona para `expired` com log do sistema. Registrado no agendador diário do Laravel em `routes/console.php`.
 
+---
+
+## 🎨 Refatoração Geral de UI/UX - Concluída em 14/06/2026
+
+1. **Adoção de Ícones Lucide:**
+   - Instalada a biblioteca `lucide-react` para fornecer uma identidade de ícones consistente, leve e profissional em todo o frontend, eliminando emojis antigos da interface.
+2. **Identidade Visual, Tipografia & Reset:**
+   - Importadas as fontes Google "Outfit" (títulos/headers) e "Inter" (texto corrido) em `index.css`.
+   - Adicionado reset global de scrollbar (`::-webkit-scrollbar`) com dimensões finas e cantos arredondados no tom slate escuro.
+   - Definidos keyframes e utilitários de animação CSS (`animate-fade-in` e `animate-scale-up`) para transições suaves de páginas e overlays de modais.
+3. **Casca de Navegação (`AppLayout.tsx`):**
+   - Refatorado o layout com menu lateral em vidro de desfoque sutil (glassmorphism), efeitos dinâmicos de escala em hover nos links e seção de perfil de usuário com avatar e dados da empresa inquilina.
+   - Adicionado cabeçalho fixo com widget de data atual por extenso e indicador visual "Sistema Online" com pulso dinâmico.
+4. **Painel do Dashboard (`DashboardPage.tsx`):**
+   - Adicionados gradientes radiais em hover nos indicadores numéricos.
+   - Criado um widget de **anel circular dinâmico (SVG Circular Progress Ring)** para representar visualmente a taxa de fechamento comercial de maneira moderna.
+   - Reformulados os atalhos rápidos com gradientes de alta tecnologia e listagem de propostas recentes com fontes mono-espaçadas limpas.
+5. **Formulário de Orçamentos de Alto Desempenho (`BudgetFormPage.tsx`):**
+   - Substituída a tela longa por um **Stepper UX de 3 passos interativos** (Identificação -> Itens -> Condições Comerciais).
+   - O resumo financeiro de totais, impostos e descontos foi fixado em um **painel lateral aderente (Sticky Card)**, atualizado em tempo real.
+   - Os seletores de perfil e acessórios agora contam com pré-visualizadores rápidos de cores (exibindo círculos da cor real selecionada em hex).
+6. **Listagem e Gestão Comercial (`BudgetsPage.tsx`):**
+   - Substituídas as ações em emojis na listagem por botões elegantes de ícone Lucide com estados de hover temáticos (azul, verde, roxo, vermelho, etc.) e feedbacks de download em tempo real (spinner de progresso de download).
+
+

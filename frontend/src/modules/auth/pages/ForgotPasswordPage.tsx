@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '../schemas/forgot-password';
 import { authApi } from '../api';
 
@@ -29,7 +30,11 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <div className="space-y-6 text-center">
-        <div className="text-4xl">📧</div>
+        <div className="flex justify-center">
+          <div className="rounded-xl bg-blue-500/10 p-3.5 border border-blue-500/20 text-blue-400">
+            <Mail className="h-8 w-8" />
+          </div>
+        </div>
         <h2 className="text-xl font-semibold text-white">E-mail enviado</h2>
         <p className="text-sm text-gray-400">
           Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.
