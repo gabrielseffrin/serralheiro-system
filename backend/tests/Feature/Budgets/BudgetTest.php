@@ -673,3 +673,54 @@ it('allows guest to download budget PDF via public token', function () {
     $response->assertOk()
         ->assertHeader('content-type', 'application/pdf');
 });
+
+it('rejects budget update when status is not draft', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'base_price' => 200.00]);
+
+    $budget = Budget::factory()->for($company)->for($customer)->create([
+        'status' => 'approved',
+    ]);
+    BudgetItem::factory()->for($budget)->create([
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'unit_price' => 200.00,
+        'total' => 200.00,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->putJson("/api/budgets/{$budget->id}", [
+        'customer_id' => $customer->id,
+        'discount' => 10.00,
+        'status' => 'approved',
+        'items' => [
+            [
+                'product_id' => $product->id,
+                'quantity' => 2,
+            ],
+        ],
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['status']);
+});
+
+it('rejects budget deletion when status is not draft', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $budget = Budget::factory()->for($company)->for($customer)->create([
+        'status' => 'approved',
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->deleteJson("/api/budgets/{$budget->id}");
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['status']);
+});
+

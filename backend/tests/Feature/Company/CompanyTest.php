@@ -103,3 +103,28 @@ it('validates logo upload request', function () {
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['logo']);
 });
+
+it('removes company logo successfully', function () {
+    Storage::fake('public');
+
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    Sanctum::actingAs($user);
+
+    // Primeiro define uma logo inicial
+    $file = UploadedFile::fake()->image('logo.png', 200, 200);
+    $path = Storage::disk('public')->putFile('logos', $file);
+    $company->update(['logo' => $path]);
+
+    Storage::disk('public')->assertExists($path);
+
+    // Remove a logo via DELETE endpoint
+    $response = $this->deleteJson('/api/company/logo');
+
+    $response->assertOk()
+        ->assertJsonPath('data.logo', null);
+
+    $company->refresh();
+    expect($company->logo)->toBeNull();
+    Storage::disk('public')->assertMissing($path);
+});

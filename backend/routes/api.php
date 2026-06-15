@@ -9,6 +9,7 @@ use App\Modules\Budgets\Controllers\DashboardController;
 use App\Modules\Budgets\Controllers\PublicBudgetController;
 use App\Modules\Companies\Controllers\CompanyController;
 use App\Modules\Companies\Controllers\CompanyLogoController;
+use App\Modules\Companies\Controllers\DestroyCompanyLogoController;
 use App\Modules\Customers\Controllers\CustomerController;
 use App\Modules\Products\Controllers\GlassTypeController;
 use App\Modules\Products\Controllers\ProductColorController;
@@ -45,6 +46,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::get('/company', [CompanyController::class, 'show']);
     Route::put('/company', [CompanyController::class, 'update']);
     Route::post('/company/logo', CompanyLogoController::class);
+    Route::delete('/company/logo', DestroyCompanyLogoController::class);
 
     // Customer routes
     Route::apiResource('customers', CustomerController::class);

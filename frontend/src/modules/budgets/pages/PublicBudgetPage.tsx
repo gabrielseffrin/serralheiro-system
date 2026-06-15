@@ -2,6 +2,15 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { budgetsApi } from '@/services/budgets';
+import { 
+  Download, 
+  X, 
+  Check, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Sparkles, 
+  ThumbsDown
+} from 'lucide-react';
 
 export default function PublicBudgetPage() {
   const { token } = useParams<{ token: string }>();
@@ -84,7 +93,7 @@ export default function PublicBudgetPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100 p-4">
         <div className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center shadow-2xl">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <AlertTriangle className="h-12 w-12 mx-auto text-red-500 mb-4 animate-bounce" />
           <h2 className="text-xl font-bold text-white mb-2">Proposta não encontrada</h2>
           <p className="text-sm text-slate-400 mb-6">
             O link de visualização pode ter expirado ou o código do orçamento é inválido. Entre em contato com a empresa para obter um novo link.
@@ -116,7 +125,7 @@ export default function PublicBudgetPage() {
             disabled={downloading}
             className="rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-750 px-4 py-2 text-xs font-bold text-white transition-colors border border-slate-750 flex items-center gap-2 cursor-pointer disabled:opacity-40"
           >
-            {downloading ? 'Gerando...' : '📥 Baixar PDF'}
+            {downloading ? 'Gerando...' : <span className="flex items-center gap-1.5"><Download className="h-3.5 w-3.5" /> Baixar PDF</span>}
           </button>
           {isPendingActions && (
             <>
@@ -125,18 +134,18 @@ export default function PublicBudgetPage() {
                   setClientNotes('');
                   setIsRejectModalOpen(true);
                 }}
-                className="rounded-xl bg-red-650/20 hover:bg-red-650/35 border border-red-800 text-red-400 px-4 py-2 text-xs font-bold transition-colors cursor-pointer"
+                className="rounded-xl bg-red-650/20 hover:bg-red-650/35 border border-red-800 text-red-400 px-4 py-2 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                ✕ Recusar
+                <X className="h-3.5 w-3.5" /> Recusar
               </button>
               <button
                 onClick={() => {
                   setClientNotes('');
                   setIsApproveModalOpen(true);
                 }}
-                className="rounded-xl bg-green-600 hover:bg-green-500 text-white px-5 py-2 text-xs font-bold transition-colors cursor-pointer shadow-lg shadow-green-900/30"
+                className="rounded-xl bg-green-600 hover:bg-green-500 text-white px-5 py-2 text-xs font-bold transition-colors cursor-pointer shadow-lg shadow-green-900/30 flex items-center gap-1.5"
               >
-                ✓ Aprovar Proposta
+                <Check className="h-3.5 w-3.5" /> Aprovar Proposta
               </button>
             </>
           )}
@@ -144,8 +153,9 @@ export default function PublicBudgetPage() {
       </div>
 
       {successMessage && (
-        <div className="max-w-4xl w-full rounded-xl border border-green-800 bg-green-900/20 p-4 text-sm text-green-400 shadow-md">
-          🎉 {successMessage}
+        <div className="max-w-4xl w-full rounded-xl border border-green-800 bg-green-950/20 p-4 text-sm text-green-400 flex items-center gap-2.5 shadow-lg animate-scale-up">
+          <CheckCircle2 className="h-5 w-5 text-green-455" />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -160,226 +170,314 @@ export default function PublicBudgetPage() {
         
         {/* Proposal Header Banner inside the document */}
         {!isPendingActions && (
-          <div className={`mb-8 p-4 rounded-xl text-center font-bold text-sm ${
+          <div className={`mb-8 p-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2.5 border ${
             budget.status === 'approved' 
-              ? 'bg-green-50 text-green-800 border border-green-200' 
+              ? 'bg-green-950/20 text-green-455 border-green-900/40' 
               : budget.status === 'rejected'
-              ? 'bg-red-50 text-red-800 border border-red-200'
-              : 'bg-slate-100 text-slate-600 border border-slate-200'
+              ? 'bg-red-950/20 text-red-450 border-red-900/40'
+              : 'bg-slate-900/30 text-slate-550 border-slate-800/60'
           }`}>
-            {budget.status === 'approved' && '✓ Esta proposta foi aprovada comercialmente.'}
-            {budget.status === 'rejected' && '✕ Esta proposta foi recusada pelo cliente.'}
-            {budget.status === 'expired' && '⚠️ Esta proposta expirou e não está mais disponível para aceite.'}
+            {budget.status === 'approved' && (
+              <>
+                <CheckCircle2 className="h-4.5 w-4.5 text-green-555" />
+                <span>Esta proposta foi aprovada comercialmente.</span>
+              </>
+            )}
+            {budget.status === 'rejected' && (
+              <>
+                <X className="h-4.5 w-4.5 text-red-400" />
+                <span>Esta proposta foi recusada pelo cliente.</span>
+              </>
+            )}
+            {budget.status === 'expired' && (
+              <>
+                <AlertTriangle className="h-4.5 w-4.5 text-amber-500" />
+                <span>Esta proposta expirou e não está mais disponível para aceite.</span>
+              </>
+            )}
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-6 mb-8 gap-6">
+        <header className="border-b-2 border-slate-800 pb-6 mb-8 flex flex-col sm:flex-row justify-between items-start gap-6">
+          {/* Empresa */}
           <div>
             {budget.company?.logo ? (
-              <img src={budget.company.logo} alt="Logo" className="h-16 object-contain mb-4" />
+              <img src={budget.company.logo} alt="Logo" className="h-20 object-contain mb-3" />
             ) : (
-              <div className="h-16 w-16 bg-blue-600 rounded-xl flex items-center justify-center text-white text-2xl font-black mb-4">
+              <div className="h-16 w-16 bg-slate-900 rounded-lg flex items-center justify-center text-white text-2xl font-black mb-3">
                 {budget.company?.name ? budget.company.name.charAt(0).toUpperCase() : 'S'}
               </div>
             )}
-            <h1 className="text-xl font-bold text-slate-800">{budget.company?.name}</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{budget.company?.name}</h1>
             {budget.company?.trade_name && (
-              <p className="text-xs text-slate-500 font-medium">{budget.company.trade_name}</p>
+              <p className="text-slate-500 font-semibold text-sm">{budget.company.trade_name}</p>
             )}
-            <div className="mt-2 text-xs text-slate-600 space-y-0.5">
-              {budget.company?.document && <p>CNPJ: {budget.company.document}</p>}
-              {budget.company?.phone && <p>Fone: {budget.company.phone}</p>}
-              {budget.company?.email && <p>E-mail: {budget.company.email}</p>}
-              {budget.company?.address && <p>Endereço: {budget.company.address}</p>}
+            <div className="text-xs mt-3 text-slate-650 space-y-0.5">
+              {budget.company?.document && <p>CNPJ: <strong>{budget.company.document}</strong></p>}
+              {budget.company?.phone && <p>Telefone: <strong>{budget.company.phone}</strong></p>}
+              {budget.company?.email && <p>E-mail: <strong>{budget.company.email}</strong></p>}
+              {budget.company?.address && <p>Endereço: <strong>{budget.company.address}</strong></p>}
             </div>
           </div>
 
+          {/* Badge do orçamento */}
           <div className="sm:text-right">
-            <span className="inline-block bg-blue-550/10 text-blue-700 text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider mb-3">
-              Proposta Comercial
-            </span>
-            <h2 className="text-2xl font-black text-slate-900">{budget.number_formatted}</h2>
-            <p className="text-xs text-slate-500 font-semibold mt-0.5">Versão {budget.version}</p>
-            <div className="mt-4 text-xs text-slate-600 space-y-0.5">
-              <p>Data de emissão: <strong>{new Date(budget.created_at).toLocaleDateString('pt-BR')}</strong></p>
+            <div className="bg-slate-900 text-white rounded-lg px-5 py-3 inline-block text-left sm:text-right">
+              <p className="text-[10px] tracking-[0.2em] uppercase font-bold text-slate-300">Proposta Comercial</p>
+              <p className="text-3xl font-black leading-tight">{budget.number_formatted}</p>
+              <p className="text-xs font-semibold text-slate-400">Versão {budget.version}</p>
+            </div>
+            <div className="mt-4 text-xs text-slate-650 space-y-0.5">
+              <p>Emissão: <strong>{new Date(budget.created_at).toLocaleDateString('pt-BR')}</strong></p>
               {budget.expiration_date && (
                 <p>Válido até: <strong className="text-red-650">{new Date(budget.expiration_date).toLocaleDateString('pt-BR')}</strong></p>
               )}
-              <p>Status: <strong className="uppercase">{budget.status}</strong></p>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Customer Detail / Installation Info */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Destinatário / Cliente</h3>
-            <p className="font-bold text-slate-800">{budget.customer?.name}</p>
-            <div className="mt-1.5 text-xs text-slate-600 space-y-0.5">
-              {budget.customer?.document && <p>CPF/CNPJ: {budget.customer.document}</p>}
-              {budget.customer?.phone && <p>Fone: {budget.customer.phone}</p>}
-              {budget.customer?.email && <p>E-mail: {budget.customer.email}</p>}
+        {/* Cliente e Local de Instalação */}
+        <section className="border border-slate-200 rounded-xl p-5 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Coluna 1: Dados cadastrais */}
+            <div>
+              <h2 className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3">
+                Destinatário / Cliente
+              </h2>
+              <p className="font-bold text-slate-800 text-base">
+                {budget.customer?.name}
+              </p>
+              <div className="mt-2 text-xs text-slate-650 space-y-0.5">
+                {budget.customer?.document && <p>CPF/CNPJ: <strong>{budget.customer.document}</strong></p>}
+                {budget.customer?.phone && <p>Telefone: <strong>{budget.customer.phone}</strong></p>}
+                {budget.customer?.email && <p>E-mail: <strong>{budget.customer.email}</strong></p>}
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Local da Obra</h3>
-            <div className="text-xs text-slate-600 space-y-0.5">
-              <p>Instalação em: {budget.customer?.address || 'Mesmo endereço cadastrado'}</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Items */}
-        <div className="mb-8">
-          <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">Itens Inclusos</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-slate-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr className="bg-slate-105 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
-                  <th className="p-3 w-12 text-center">Item</th>
-                  <th className="p-3">Esquadria / Descrição Detalhada</th>
-                  <th className="p-3 w-16 text-center">Qtd</th>
-                  <th className="p-3 w-32 text-right">Unitário</th>
-                  <th className="p-3 w-32 text-right">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
-                {budget.items?.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50">
-                    <td className="p-3 text-center text-slate-400 font-bold">{idx + 1}</td>
-                    <td className="p-3 space-y-1">
-                      <p className="font-bold text-slate-900 text-sm">{item.product?.name}</p>
-                      {(item.tag || item.location) && (
-                        <p className="text-[11px] text-slate-500 font-medium">
-                          {item.tag && <span className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono font-bold mr-1">{item.tag}</span>}
-                          {item.location && <span>- Local: {item.location}</span>}
-                        </p>
+            {/* Coluna 2: Dados da obra */}
+            <div>
+              <h2 className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3">
+                Dados da Obra / Entrega
+              </h2>
+              <div className="text-xs text-slate-655 space-y-0.5">
+                {budget.customer?.address ? (
+                  <p>Local: <strong>{budget.customer.address}</strong></p>
+                ) : (
+                  <p className="text-slate-400 italic">Mesmo endereço cadastrado</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Itens */}
+        <h2 className="font-black uppercase mb-4 tracking-wide text-slate-800 text-sm">
+          Itens do Orçamento
+        </h2>
+
+        <div className="space-y-4 mb-8">
+          {budget.items?.map((item, index) => (
+            <div key={item.id} className="border border-slate-200 rounded-xl p-5 bg-white text-slate-800">
+              {/* Cabeçalho do item */}
+              <div className="flex justify-between items-start border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                    Item {index + 1}
+                  </span>
+                  <h3 className="text-base font-bold text-slate-800">
+                    {item.product?.name}
+                  </h3>
+                  {(item.tag || item.location) && (
+                    <p className="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-1.5 items-center">
+                      {item.tag && (
+                        <span className="bg-slate-105 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]">
+                          {item.tag}
+                        </span>
                       )}
-                      
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-500 pt-1">
-                        {item.width && item.height && (
-                          <p>Medidas: <strong>{item.width} x {item.height} mm</strong></p>
-                        )}
-                        {item.line && <p>Linha: <strong>{item.line.name}</strong></p>}
-                        {item.profile_color && <p>Perfil: <strong>{item.profile_color.name}</strong></p>}
-                        {item.glass_type && <p>Vidro: <strong>{item.glass_type.name}</strong></p>}
-                        {item.accessory_color && <p>Acessório: <strong>{item.accessory_color.name}</strong></p>}
-                      </div>
-                      
-                      {item.notes && (
-                        <p className="text-[11px] italic text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100 mt-2">
-                          Obs: {item.notes}
-                        </p>
-                      )}
-                    </td>
-                    <td className="p-3 text-center font-semibold text-slate-800">{item.quantity}</td>
-                    <td className="p-3 text-right font-mono text-slate-650">{formatCurrency(parseFloat(item.unit_price))}</td>
-                    <td className="p-3 text-right font-mono font-bold text-slate-900">{formatCurrency(parseFloat(item.total))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      {item.location && <span>Local: {item.location}</span>}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">Quantidade</p>
+                  <p className="text-lg font-black text-slate-800">{item.quantity}</p>
+                </div>
+              </div>
+
+              {/* Especificações técnicas */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
+                {item.width && item.height && (
+                  <div>
+                    <p className="text-slate-400 text-[10px] uppercase font-semibold">Dimensão</p>
+                    <p className="font-bold text-slate-700">{item.width} x {item.height} mm</p>
+                  </div>
+                )}
+                {item.line && (
+                  <div>
+                    <p className="text-slate-400 text-[10px] uppercase font-semibold">Linha</p>
+                    <p className="font-bold text-slate-700">{item.line.name}</p>
+                  </div>
+                )}
+                {item.profile_color && (
+                  <div>
+                    <p className="text-slate-400 text-[10px] uppercase font-semibold">Cor Perfil</p>
+                    <p className="font-bold text-slate-700">{item.profile_color.name}</p>
+                  </div>
+                )}
+                {item.glass_type && (
+                  <div>
+                    <p className="text-slate-400 text-[10px] uppercase font-semibold">Vidro</p>
+                    <p className="font-bold text-slate-700">{item.glass_type.name}</p>
+                  </div>
+                )}
+                {item.accessory_color && (
+                  <div>
+                    <p className="text-slate-400 text-[10px] uppercase font-semibold">Cor Acessório</p>
+                    <p className="font-bold text-slate-700">{item.accessory_color.name}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Observação do item */}
+              {item.notes && (
+                <div className="mt-4 bg-slate-50 rounded-lg p-3 text-xs text-slate-600 border border-slate-100">
+                  <strong className="text-slate-700">Observação:</strong> {item.notes}
+                </div>
+              )}
+
+              {/* Valores */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-8 text-right">
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Valor Unitário</p>
+                  <p className="font-mono text-slate-700">{formatCurrency(parseFloat(item.unit_price))}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Total do Item</p>
+                  <p className="font-mono font-black text-slate-900 text-base">{formatCurrency(parseFloat(item.total))}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Financial Details */}
-        <div className="flex justify-end mb-8">
-          <div className="w-72 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 font-mono text-xs text-slate-700">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>{formatCurrency(parseFloat(budget.subtotal))}</span>
-            </div>
-            {parseFloat(budget.discount) > 0 && (
-              <div className="flex justify-between text-red-650 font-semibold">
-                <span>Desconto (-) :</span>
-                <span>{formatCurrency(parseFloat(budget.discount))}</span>
+        {/* Resumo Financeiro */}
+        <div className="flex justify-end mt-6 mb-8">
+          <div className="w-80 border border-slate-200 rounded-xl overflow-hidden bg-white">
+            <div className="px-5 py-3 space-y-2 text-xs font-mono text-slate-700">
+              <div className="flex justify-between">
+                <span className="font-sans">Subtotal:</span>
+                <span>{formatCurrency(parseFloat(budget.subtotal))}</span>
               </div>
-            )}
-            <div className="flex justify-between border-t border-slate-200 pt-2.5 text-sm font-bold text-slate-900">
-              <span className="font-sans">Valor Total:</span>
-              <span className="text-blue-700">{formatCurrency(parseFloat(budget.total))}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Commercial Conditions */}
-        <div className="border-t border-slate-200 pt-6 mb-12 space-y-4 text-xs text-slate-700">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Condições Comerciais</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {budget.payment_method && (
-              <div>
-                <span className="font-semibold text-slate-400 block">Forma de Pagamento</span>
-                <span className="text-slate-800 font-medium">{budget.payment_method}</span>
-              </div>
-            )}
-            {budget.delivery_term && (
-              <div>
-                <span className="font-semibold text-slate-400 block">Prazo de Entrega</span>
-                <span className="text-slate-800 font-medium">{budget.delivery_term}</span>
-              </div>
-            )}
-            {budget.warranty_term && (
-              <div>
-                <span className="font-semibold text-slate-400 block">Termo de Garantia</span>
-                <span className="text-slate-800 font-medium">{budget.warranty_term}</span>
-              </div>
-            )}
-          </div>
-          {budget.notes && (
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">
-              <span className="font-semibold text-slate-500 block mb-1">Observações Adicionais:</span>
-              <p className="whitespace-pre-line text-slate-650 text-[11px] leading-relaxed">{budget.notes}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Signature Box */}
-        <div className="grid grid-cols-2 gap-8 pt-12 border-t border-slate-200 text-center text-xs text-slate-400">
-          <div className="flex flex-col items-center">
-            <div className="w-48 border-b border-slate-200 mb-2 h-12"></div>
-            <p className="font-bold text-slate-700">{budget.company?.name}</p>
-            <p>Representante Comercial</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-48 border-b border-slate-200 mb-2 h-12">
-              {budget.status === 'approved' && (
-                <div className="text-green-600 font-mono text-[10px] uppercase font-bold flex items-center justify-center h-full tracking-widest bg-green-50 rounded">
-                  ✓ Aceito Digitalmente
+              {parseFloat(budget.discount) > 0 && (
+                <div className="flex justify-between text-red-600 font-medium">
+                  <span className="font-sans">Desconto (−):</span>
+                  <span>{formatCurrency(parseFloat(budget.discount))}</span>
                 </div>
               )}
             </div>
-            <p className="font-bold text-slate-700">{budget.customer?.name}</p>
-            <p>Assinatura / Aceite do Cliente</p>
+
+            <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
+              <span className="font-bold uppercase text-sm">Total Geral</span>
+              <span className="text-2xl font-black">{formatCurrency(parseFloat(budget.total))}</span>
+            </div>
           </div>
         </div>
+
+        {/* Condições Comerciais */}
+        <section className="border-t-2 border-slate-200 pt-6 mb-10">
+          <h2 className="font-black uppercase mb-4 tracking-wide text-sm text-slate-800">
+            Condições Comerciais
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs">
+            {budget.payment_method && (
+              <div className="bg-slate-55 rounded-lg p-3 border border-slate-100">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Forma de Pagamento</p>
+                <p className="font-bold text-slate-800">{budget.payment_method}</p>
+              </div>
+            )}
+
+            {budget.delivery_term && (
+              <div className="bg-slate-55 rounded-lg p-3 border border-slate-100">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Prazo de Entrega</p>
+                <p className="font-bold text-slate-800">{budget.delivery_term}</p>
+              </div>
+            )}
+
+            {budget.warranty_term && (
+              <div className="bg-slate-55 rounded-lg p-3 border border-slate-100">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Garantia</p>
+                <p className="font-bold text-slate-800">{budget.warranty_term}</p>
+              </div>
+            )}
+          </div>
+
+          {budget.notes && (
+            <div className="mt-4 bg-slate-50 rounded-lg p-4 text-xs border border-slate-100 text-slate-650">
+              <p className="font-bold text-slate-700 mb-1">Observações Gerais:</p>
+              <p className="whitespace-pre-line leading-relaxed">{budget.notes}</p>
+            </div>
+          )}
+        </section>
+
+        {/* Assinaturas */}
+        <div className="grid grid-cols-2 gap-8 md:gap-20 mt-16 text-center text-xs">
+          <div>
+            <div className="border-t border-slate-400 pt-3 mx-4 md:mx-8">
+              <p className="font-bold text-slate-800">{budget.company?.name}</p>
+              <p className="text-slate-500">Responsável Comercial</p>
+            </div>
+          </div>
+
+          <div>
+            <div className="border-t border-slate-400 pt-3 mx-4 md:mx-8 flex flex-col items-center">
+              <div className="w-full mb-2 h-12 flex items-center justify-center">
+                {budget.status === 'approved' && (
+                  <div className="text-green-600 font-mono text-[10px] uppercase font-bold flex items-center justify-center gap-1.5 px-3 py-1 bg-green-50 border border-green-200 rounded">
+                    <Check className="h-3.5 w-3.5 text-green-600" /> Aceito Digitalmente
+                  </div>
+                )}
+              </div>
+              <p className="font-bold text-slate-800">{budget.customer?.name}</p>
+              <p className="text-slate-555">Aceite do Cliente</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-12 text-center text-[10px] text-slate-400 border-t border-slate-100 pt-4">
+          Orçamento válido conforme condições descritas neste documento.
+          <br />
+          Gerado em {new Date(budget.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+        </footer>
 
       </div>
 
       {/* Approve Modal */}
       {isApproveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative text-slate-100">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              🎉 Confirmar Aprovação
+              <Sparkles className="h-5 w-5 text-green-400 animate-pulse" /> Confirmar Aprovação
             </h3>
             <p className="text-sm text-slate-400">
               Ao confirmar, você formaliza a aprovação comercial desta proposta de orçamento. Você pode deixar um comentário ou observação para a serralheria abaixo:
             </p>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-400">Observações adicionais (opcional)</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Observações adicionais (opcional)</label>
               <textarea
                 rows={3}
                 value={clientNotes}
                 onChange={(e) => setClientNotes(e.target.value)}
                 placeholder="Ex: Pode iniciar. Aguardo o contato para agendar as medições finais."
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200"
               />
             </div>
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setIsApproveModalOpen(false)}
-                className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
               >
                 Cancelar
               </button>
@@ -387,7 +485,7 @@ export default function PublicBudgetPage() {
                 type="button"
                 onClick={() => approveMutation.mutate(clientNotes)}
                 disabled={approveMutation.isPending}
-                className="flex-1 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex-1 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md shadow-green-950/20 cursor-pointer"
               >
                 {approveMutation.isPending ? 'Confirmando...' : 'Confirmar e Aprovar'}
               </button>
@@ -398,29 +496,29 @@ export default function PublicBudgetPage() {
 
       {/* Reject Modal */}
       {isRejectModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative text-slate-100">
             <h3 className="text-lg font-bold text-white flex items-center gap-2 text-red-400">
-              ✕ Recusar Proposta
+              <ThumbsDown className="h-5 w-5 text-red-400" /> Recusar Proposta
             </h3>
             <p className="text-sm text-slate-400">
               Por favor, informe-nos o motivo do declínio para que possamos ajustar a proposta ou melhorar nosso atendimento:
             </p>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-400">Motivo do declínio *</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Motivo do declínio *</label>
               <textarea
                 rows={3}
                 value={clientNotes}
                 onChange={(e) => setClientNotes(e.target.value)}
                 placeholder="Ex: Preço acima do orçamento planejado, prazo de entrega muito longo, etc."
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200"
               />
             </div>
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setIsRejectModalOpen(false)}
-                className="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
               >
                 Cancelar
               </button>
@@ -428,7 +526,7 @@ export default function PublicBudgetPage() {
                 type="button"
                 onClick={() => rejectMutation.mutate(clientNotes)}
                 disabled={rejectMutation.isPending}
-                className="flex-1 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex-1 rounded-xl bg-red-650 hover:bg-red-550 disabled:opacity-50 px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md shadow-red-950/20 cursor-pointer"
               >
                 {rejectMutation.isPending ? 'Enviando...' : 'Enviar e Recusar'}
               </button>

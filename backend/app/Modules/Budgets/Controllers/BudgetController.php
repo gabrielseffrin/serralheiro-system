@@ -14,6 +14,8 @@ use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Spatie\Browsershot\Browsershot;
 
+use Illuminate\Validation\ValidationException;
+
 class BudgetController extends Controller
 {
     protected BudgetService $budgetService;
@@ -63,6 +65,12 @@ class BudgetController extends Controller
 
     public function update(UpdateBudgetRequest $request, Budget $budget): BudgetResource
     {
+        if ($budget->status !== 'draft') {
+            throw ValidationException::withMessages([
+                'status' => ['Apenas orçamentos com status Rascunho podem ser editados.'],
+            ]);
+        }
+
         $updatedBudget = $this->budgetService->update(
             $budget,
             $request->validated(),
@@ -75,10 +83,17 @@ class BudgetController extends Controller
 
     public function destroy(Budget $budget): Response
     {
+        if ($budget->status !== 'draft') {
+            throw ValidationException::withMessages([
+                'status' => ['Apenas orçamentos com status Rascunho podem ser excluídos.'],
+            ]);
+        }
+
         $budget->delete();
 
         return response()->noContent();
     }
+
 
     public function duplicate(Request $request, Budget $budget): BudgetResource
     {

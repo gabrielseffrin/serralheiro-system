@@ -7,6 +7,21 @@ import { budgetsApi } from '@/services/budgets';
 import { customersApi } from '@/services/customers';
 import { productsApi } from '@/services/products';
 import { budgetSchema, type BudgetFormData } from '../schemas/budget';
+import { 
+  User, 
+  Ruler, 
+  CreditCard, 
+  Plus, 
+  Trash2, 
+  ArrowLeft, 
+  ChevronRight, 
+  ChevronLeft, 
+  FileCheck2,
+  DollarSign,
+  AlertCircle
+} from 'lucide-react';
+
+type TabType = 'general' | 'items' | 'terms';
 
 export default function BudgetFormPage() {
   const { id } = useParams();
@@ -14,11 +29,12 @@ export default function BudgetFormPage() {
   const queryClient = useQueryClient();
   const isEditMode = !!id;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('general');
 
   // Queries for catalog data
   const { data: customersData } = useQuery({
     queryKey: ['customers-form-list'],
-    queryFn: () => customersApi.list(1), // Fetch page 1 (up to 15 items for simplicity)
+    queryFn: () => customersApi.list(1),
   });
 
   const { data: productsData } = useQuery({
@@ -58,6 +74,18 @@ export default function BudgetFormPage() {
   });
 
   const budget = budgetData?.data;
+
+  const isReadOnly = isEditMode && budget && budget.status !== 'draft';
+
+  const STATUS_LABELS: Record<string, string> = {
+    draft: 'Rascunho',
+    sent: 'Enviado',
+    viewed: 'Visualizado',
+    negotiating: 'Em Negociação',
+    approved: 'Aprovado',
+    rejected: 'Rejeitado',
+    expired: 'Expirado',
+  };
 
   // React Hook Form Setup
   const {
@@ -225,8 +253,6 @@ export default function BudgetFormPage() {
         profile_color_id: item.profile_color_id || null,
         glass_type_id: item.glass_type_id || null,
         accessory_color_id: item.accessory_color_id || null,
-        // Send unit_price override if product is fixed pricing, otherwise backend recalculates,
-        // but we send the calculated unit price anyway to ensure consistency.
         unit_price: calc.unit_price,
         notes: item.notes || null,
       };
@@ -256,7 +282,8 @@ export default function BudgetFormPage() {
 
   if (isEditMode && loadingBudget) {
     return (
-      <div className="flex h-[50vh] items-center justify-center text-gray-400">
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-3 text-slate-400">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500"></div>
         Carregando detalhes do orçamento...
       </div>
     );
@@ -266,369 +293,490 @@ export default function BudgetFormPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to="/budgets" className="text-gray-400 hover:text-white transition-colors text-lg">
-          ←
+        <Link to="/budgets" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors">
+          <ArrowLeft className="h-4.5 w-4.5" />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-2.5xl font-black text-white tracking-tight">
             {isEditMode ? `Editar Orçamento ${budget?.number_formatted}` : 'Novo Orçamento'}
           </h2>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="text-sm text-slate-450">
             {isEditMode
               ? `Editando a versão ${budget?.version} do orçamento comercial.`
-              : 'Preencha as informações do cliente, adicione produtos e crie a proposta.'}
+              : 'Preencha as informações do cliente, monte o catálogo de esquadrias e crie a proposta.'}
           </p>
         </div>
       </div>
 
+      {isReadOnly && (
+        <div className="rounded-xl border border-amber-800 bg-amber-950/20 p-4 text-sm text-amber-400 flex items-start gap-3 shadow-md animate-scale-up">
+          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 animate-pulse" />
+          <div>
+            <strong className="font-bold block text-white mb-0.5">Orçamento Não Editável</strong>
+            Este orçamento está com status <span className="font-semibold uppercase text-amber-300">"{STATUS_LABELS[budget?.status || ''] || budget?.status}"</span> e não pode ser modificado. Para fazer alterações, retorne à lista de orçamentos e crie uma <strong>"Nova Versão"</strong> para obter um rascunho atualizado.
+          </div>
+        </div>
+      )}
+
       {errorMessage && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-4 text-sm text-red-400">
+        <div className="rounded-xl border border-red-800 bg-red-950/20 p-4 text-sm text-red-400 animate-scale-up">
           ⚠️ {errorMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left/Middle: Client & Items Card list */}
+      {/* Tabs bar */}
+      <div className="border-b border-slate-800/80 flex gap-2 overflow-x-auto pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveTab('general')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'general'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <User className="h-4 w-4" /> 1. Cliente & Validade
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('items')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'items'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Ruler className="h-4 w-4" /> 2. Esquadrias (Itens)
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('terms')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'terms'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <CreditCard className="h-4 w-4" /> 3. Prazos & Condições
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Left Side: Step View Form Panels */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Card 1: Client Selection */}
-          <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-6">
-            <h3 className="text-md font-bold text-white border-b border-gray-800 pb-2">Identificação do Cliente</h3>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-gray-300">Cliente Comercial *</label>
-              <select
-                {...register('customer_id')}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-              >
-                <option value="">Selecione um cliente cadastrado</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.document && `(${c.document})`}
-                  </option>
-                ))}
-              </select>
-              {errors.customer_id && <p className="mt-1 text-xs text-red-400">{errors.customer_id.message}</p>}
-            </div>
-          </div>
-
-          {/* Card 2: Items List Editor */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-md font-bold text-white">Itens do Orçamento</h3>
-              <button
-                type="button"
-                onClick={() =>
-                  append({
-                    product_id: '',
-                    tag: '',
-                    location: '',
-                    quantity: 1,
-                    width: null,
-                    height: null,
-                    line_id: '',
-                    profile_color_id: '',
-                    glass_type_id: '',
-                    accessory_color_id: '',
-                    unit_price: null,
-                    notes: '',
-                  })
-                }
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500 cursor-pointer"
-              >
-                ➕ Adicionar Item
-              </button>
-            </div>
-
-            {errors.items && <p className="text-xs text-red-400">{errors.items.message}</p>}
-
-            {fields.map((field, index) => {
-              const itemWatch = watchedItems[index] || {};
-              const selectedProduct = products.find((p) => p.id === itemWatch.product_id);
-              const calculations = calculatedItems[index] || { unit_price: 0, total: 0, area: 0 };
-              const requiresDims = selectedProduct?.requires_dimensions || selectedProduct?.pricing_type === 'per_m2' || selectedProduct?.pricing_type === 'per_meter';
-
-              return (
-                <div
-                  key={field.id}
-                  className="rounded-xl border border-gray-800 bg-gray-900 p-5 space-y-4 relative hover:border-gray-700/60 transition-colors animate-fade-in"
+          
+          {/* TAB 1: IDENTIFICATION */}
+          {activeTab === 'general' && (
+            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-6 space-y-6 animate-fade-in">
+              <h3 className="text-md font-bold text-white border-b border-slate-800/60 pb-2 flex items-center gap-2">
+                <User className="h-4 w-4 text-blue-500" /> Identificação do Cliente
+              </h3>
+              
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Cliente Comercial *</label>
+                <select
+                  {...register('customer_id')}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 >
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    disabled={fields.length === 1}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Remover Item"
+                  <option value="">Selecione um cliente cadastrado</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.document && `(${c.document})`}
+                    </option>
+                  ))}
+                </select>
+                {errors.customer_id && <p className="mt-1.5 text-xs text-red-400">{errors.customer_id.message}</p>}
+              </div>
+
+              <div className="pt-2">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Validade da Proposta</label>
+                <input
+                  type="date"
+                  {...register('expiration_date')}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('items')}
+                  className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  Ir para Itens <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: ITEMS LIST EDITOR */}
+          {activeTab === 'items' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-md font-bold text-white flex items-center gap-2">
+                    <Ruler className="h-4 w-4 text-blue-500" /> Itens Inclusos
+                  </h3>
+                  <p className="text-xs text-slate-500">Configure dimensões e acabamentos das peças</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    append({
+                      product_id: '',
+                      tag: '',
+                      location: '',
+                      quantity: 1,
+                      width: null,
+                      height: null,
+                      line_id: '',
+                      profile_color_id: '',
+                      glass_type_id: '',
+                      accessory_color_id: '',
+                      unit_price: null,
+                      notes: '',
+                    })
+                  }
+                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-blue-500 flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-blue-500/10"
+                >
+                  <Plus className="h-4 w-4" /> Adicionar Item
+                </button>
+              </div>
+
+              {errors.items && <p className="text-xs text-red-400">{errors.items.message}</p>}
+
+              {fields.map((field, index) => {
+                const itemWatch = watchedItems[index] || {};
+                const selectedProduct = products.find((p) => p.id === itemWatch.product_id);
+                const calculations = calculatedItems[index] || { unit_price: 0, total: 0, area: 0 };
+                const requiresDims = selectedProduct?.requires_dimensions || selectedProduct?.pricing_type === 'per_m2' || selectedProduct?.pricing_type === 'per_meter';
+
+                // Color Hex previews
+                const pColor = profileColors.find(c => c.id === itemWatch.profile_color_id);
+                const aColor = accessoryColors.find(c => c.id === itemWatch.accessory_color_id);
+
+                return (
+                  <div
+                    key={field.id}
+                    className="rounded-2xl border border-slate-850 bg-slate-900/30 p-5 space-y-4 relative hover:border-slate-800 transition-colors animate-scale-up"
                   >
-                    🗑️
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      disabled={fields.length === 1}
+                      className="absolute top-4 right-4 text-slate-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      title="Remover Item"
+                    >
+                      <Trash2 className="h-4.5 w-4.5" />
+                    </button>
 
-                  <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wide">Item #{index + 1}</h4>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Item #{index + 1}</span>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Product Selection */}
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Esquadria / Produto *</label>
-                      <select
-                        {...register(`items.${index}.product_id`)}
-                        onChange={(e) => handleProductChange(index, e.target.value)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
-                      >
-                        <option value="">Selecione um produto do catálogo</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} ({p.pricing_type === 'fixed' ? 'Fixo' : p.pricing_type === 'per_m2' ? 'm²' : 'Metro'})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Product Selection */}
+                      <div className="md:col-span-2">
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Esquadria / Modelo *</label>
+                        <select
+                          {...register(`items.${index}.product_id`)}
+                          onChange={(e) => handleProductChange(index, e.target.value)}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Selecione um produto do catálogo</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} ({p.pricing_type === 'fixed' ? 'Preço Fixo' : p.pricing_type === 'per_m2' ? 'Por m²' : 'Por Metro Lineal'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    {/* Quantity */}
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Quantidade *</label>
-                      <input
-                        type="number"
-                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Dimensions conditional inputs */}
-                  {requiresDims && (
-                    <div className="grid grid-cols-2 gap-4 bg-gray-950 p-3 rounded-lg border border-gray-850">
+                      {/* Quantity */}
                       <div>
-                        <label className="mb-1 block text-[11px] font-medium text-gray-400">Largura (mm) *</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Quantidade *</label>
                         <input
                           type="number"
-                          {...register(`items.${index}.width`, { valueAsNumber: true })}
-                          placeholder="Ex: 1200"
-                          className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                         />
-                        {selectedProduct?.min_width && (
-                          <span className="text-[10px] text-gray-500">Mínimo: {selectedProduct.min_width}mm</span>
-                        )}
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-[11px] font-medium text-gray-400">Altura (mm) *</label>
-                        <input
-                          type="number"
-                          {...register(`items.${index}.height`, { valueAsNumber: true })}
-                          placeholder="Ex: 1500"
-                          className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none"
-                        />
-                        {selectedProduct?.min_height && (
-                          <span className="text-[10px] text-gray-500">Mínimo: {selectedProduct.min_height}mm</span>
-                        )}
                       </div>
                     </div>
-                  )}
 
-                  {/* Tag and Location */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Sigla / Referência (Tag)</label>
-                      <input
-                        type="text"
-                        {...register(`items.${index}.tag`)}
-                        placeholder="Ex: P01, J3"
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Local de Instalação</label>
-                      <input
-                        type="text"
-                        {...register(`items.${index}.location`)}
-                        placeholder="Ex: Sala, Sacada, Suíte"
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Advanced Item Catalogs (Line, Colors, Glass) */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Linha de Perfil</label>
-                      <select
-                        {...register(`items.${index}.line_id`)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
-                      >
-                        <option value="">Nenhuma</option>
-                        {lines.map((l) => (
-                          <option key={l.id} value={l.id}>{l.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Cor do Perfil</label>
-                      <select
-                        {...register(`items.${index}.profile_color_id`)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
-                      >
-                        <option value="">Nenhuma</option>
-                        {profileColors.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Tipo do Vidro</label>
-                      <select
-                        {...register(`items.${index}.glass_type_id`)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
-                      >
-                        <option value="">Nenhum</option>
-                        {glassTypes.map((g) => (
-                          <option key={g.id} value={g.id}>{g.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-medium text-gray-400">Cor do Acessório</label>
-                      <select
-                        {...register(`items.${index}.accessory_color_id`)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
-                      >
-                        <option value="">Nenhuma</option>
-                        {accessoryColors.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Calculations and Price Overrides */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-gray-850">
-                    <div className="flex gap-4 text-[11px] text-gray-400">
-                      {calculations.area > 0 && (
-                        <p>Área: <strong className="text-white font-mono">{calculations.area.toFixed(4)} m²</strong></p>
-                      )}
-                      <p>Preço Unitário: <strong className="text-white font-mono">{formatCurrency(calculations.unit_price)}</strong></p>
-                    </div>
-
-                    <div className="flex items-center gap-3 justify-end flex-1">
-                      {/* Manual Override Input for Fixed/PerKg pricing */}
-                      {selectedProduct?.pricing_type === 'fixed' && (
-                        <div className="flex items-center gap-1.5">
-                          <label className="text-[10px] text-gray-500 whitespace-nowrap">Alterar Preço (R$):</label>
+                    {/* Dimensions conditional inputs */}
+                    {requiresDims && (
+                      <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850">
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-400">Largura (mm) *</label>
                           <input
                             type="number"
-                            step="0.01"
-                            {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
-                            className="rounded border border-gray-700 bg-gray-950 px-2 py-0.5 text-xs text-white w-24 text-right focus:border-blue-500 focus:outline-none"
+                            {...register(`items.${index}.width`, { valueAsNumber: true })}
+                            placeholder="Ex: 1200"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                           />
+                          {selectedProduct?.min_width && (
+                            <span className="text-[10px] text-slate-550 block mt-1">Largura Mínima: {selectedProduct.min_width}mm</span>
+                          )}
                         </div>
-                      )}
-                      <div className="text-right">
-                        <span className="text-[11px] text-gray-400">Total do Item: </span>
-                        <strong className="text-sm font-bold text-white font-mono">{formatCurrency(calculations.total)}</strong>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-400">Altura (mm) *</label>
+                          <input
+                            type="number"
+                            {...register(`items.${index}.height`, { valueAsNumber: true })}
+                            placeholder="Ex: 1500"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          />
+                          {selectedProduct?.min_height && (
+                            <span className="text-[10px] text-slate-550 block mt-1">Altura Mínima: {selectedProduct.min_height}mm</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tag and Location */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Sigla / Tag</label>
+                        <input
+                          type="text"
+                          {...register(`items.${index}.tag`)}
+                          placeholder="Ex: P01, J03"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Ambiente de Instalação</label>
+                        <input
+                          type="text"
+                          {...register(`items.${index}.location`)}
+                          placeholder="Ex: Suíte, Sala de Estar"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Advanced Item Catalogs (Line, Colors, Glass) */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/10 p-3.5 rounded-xl border border-slate-850/60">
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450">Linha</label>
+                        <select
+                          {...register(`items.${index}.line_id`)}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Nenhuma</option>
+                          {lines.map((l) => (
+                            <option key={l.id} value={l.id}>{l.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-[11px] font-semibold text-slate-455">Cor Perfil</label>
+                          {pColor?.hex && (
+                            <span className="h-3 w-3 rounded-full border border-slate-700" style={{ backgroundColor: pColor.hex }} />
+                          )}
+                        </div>
+                        <select
+                          {...register(`items.${index}.profile_color_id`)}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Nenhuma</option>
+                          {profileColors.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450">Vidro</label>
+                        <select
+                          {...register(`items.${index}.glass_type_id`)}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Nenhum</option>
+                          {glassTypes.map((g) => (
+                            <option key={g.id} value={g.id}>{g.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-[11px] font-semibold text-slate-455">Cor Acessório</label>
+                          {aColor?.hex && (
+                            <span className="h-3 w-3 rounded-full border border-slate-700" style={{ backgroundColor: aColor.hex }} />
+                          )}
+                        </div>
+                        <select
+                          {...register(`items.${index}.accessory_color_id`)}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Nenhuma</option>
+                          {accessoryColors.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Calculations and Price Overrides */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-slate-800/80">
+                      <div className="flex gap-4 text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                        {calculations.area > 0 && (
+                          <p>Área: <span className="text-white font-mono">{calculations.area.toFixed(4)} m²</span></p>
+                        )}
+                        <p>Unitário Base: <span className="text-white font-mono">{formatCurrency(calculations.unit_price)}</span></p>
+                      </div>
+
+                      <div className="flex items-center gap-3 justify-end flex-1">
+                        {selectedProduct?.pricing_type === 'fixed' && (
+                          <div className="flex items-center gap-1.5">
+                            <label className="text-[10px] text-slate-450 uppercase font-bold whitespace-nowrap">Preço de Ajuste (R$):</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                              className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1 text-xs text-white w-24 text-right focus:border-blue-500 focus:outline-none font-mono"
+                            />
+                          </div>
+                        )}
+                        <div className="text-right">
+                          <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Total Item: </span>
+                          <strong className="text-sm font-bold text-white font-mono">{formatCurrency(calculations.total)}</strong>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                );
+              })}
 
-        {/* Right Panel: Proposal Settings, Discounts and Totals */}
-        <div className="space-y-6">
-          {/* Card 3: Financial Summary */}
-          <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-6">
-            <h3 className="text-md font-bold text-white border-b border-gray-800 pb-2">Resumo Financeiro</h3>
+              <div className="flex justify-between pt-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('general')}
+                  className="rounded-xl bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Voltar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('terms')}
+                  className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  Prazos & Condições <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
-            <div className="space-y-4 font-mono text-sm">
-              <div className="flex justify-between text-gray-400">
-                <span>Subtotal:</span>
-                <span className="text-white">{formatCurrency(subtotal)}</span>
+          {/* TAB 3: COMMERCIAL CONDITIONS */}
+          {activeTab === 'terms' && (
+            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-6 space-y-4 animate-fade-in">
+              <h3 className="text-md font-bold text-white border-b border-slate-800/60 pb-2 flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-blue-500" /> Condições Comerciais
+              </h3>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-400">Forma de Pagamento</label>
+                <input
+                  type="text"
+                  {...register('payment_method')}
+                  placeholder="Ex: 50% de entrada, 50% na conclusão da instalação"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                />
               </div>
 
               <div>
-                <label className="mb-1 block font-sans text-xs font-semibold text-gray-300">Desconto Comercial (R$)</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-400">Prazo de Entrega</label>
+                <input
+                  type="text"
+                  {...register('delivery_term')}
+                  placeholder="Ex: 30 dias úteis a partir da medição final"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-400">Termo de Garantia</label>
+                <input
+                  type="text"
+                  {...register('warranty_term')}
+                  placeholder="Ex: 1 ano para acessórios, 5 anos para perfis"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-400">Notas de Proposta (PDF)</label>
+                <textarea
+                  rows={4}
+                  {...register('notes')}
+                  placeholder="Observações que constarão no final do documento comercial PDF..."
+                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-between pt-4 border-t border-slate-800/80">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('items')}
+                  className="rounded-xl bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Voltar
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Right Side: Sticky Pricing Summary & Actions panel */}
+        <div className="lg:sticky lg:top-20 space-y-6">
+          
+          {/* Card 3: Financial Summary */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-6 shadow-xl">
+            <h3 className="text-md font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-blue-500" /> Resumo Financeiro
+            </h3>
+
+            <div className="space-y-4 font-mono text-xs">
+              <div className="flex justify-between text-slate-400">
+                <span className="font-sans font-medium">Subtotal dos Itens:</span>
+                <span className="text-white font-bold">{formatCurrency(subtotal)}</span>
+              </div>
+
+              <div>
+                <label className="mb-1 block font-sans text-xs font-semibold text-slate-400">Desconto Comercial (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   {...register('discount', { valueAsNumber: true })}
-                  className="w-full font-mono rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-white focus:border-blue-500 focus:outline-none"
-                  placeholder="0.00"
+                  className="w-full font-mono rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none text-right"
+                  placeholder="0,00"
                 />
                 {errors.discount && <p className="mt-1 text-xs text-red-400 font-sans">{errors.discount.message}</p>}
               </div>
 
-              <div className="border-t border-gray-800 pt-4 flex justify-between text-base font-bold">
-                <span className="font-sans text-gray-300">Total Geral:</span>
-                <span className="text-green-400 font-black text-lg">{formatCurrency(grandTotal)}</span>
+              <div className="border-t border-slate-850 pt-4 flex justify-between text-sm font-bold">
+                <span className="font-sans text-slate-350">Total Líquido:</span>
+                <span className="text-emerald-400 font-black text-base">{formatCurrency(grandTotal)}</span>
               </div>
             </div>
           </div>
 
-          {/* Card 4: Commercial Conditions */}
-          <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-4">
-            <h3 className="text-md font-bold text-white border-b border-gray-800 pb-2">Condições Comerciais</h3>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-300">Validade da Proposta</label>
-              <input
-                type="date"
-                {...register('expiration_date')}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-300">Forma de Pagamento</label>
-              <input
-                type="text"
-                {...register('payment_method')}
-                placeholder="Ex: 50% entrada, 50% entrega"
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-300">Prazo de Entrega</label>
-              <input
-                type="text"
-                {...register('delivery_term')}
-                placeholder="Ex: 25 dias úteis"
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-300">Termo de Garantia</label>
-              <input
-                type="text"
-                {...register('warranty_term')}
-                placeholder="Ex: 1 ano contra defeitos"
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-300">Observações de Proposta</label>
-              <textarea
-                rows={3}
-                {...register('notes')}
-                placeholder="Observações que constarão no final do documento PDF..."
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Form Actions */}
+          {/* Form Action Buttons */}
           <div className="flex gap-4">
             <Link
               to="/budgets"
-              className="flex-1 rounded-lg bg-gray-800 hover:bg-gray-750 px-4 py-2.5 text-sm font-semibold text-white transition-colors text-center cursor-pointer"
+              className="flex-1 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-800 px-4 py-3 text-xs font-bold text-slate-300 hover:text-white transition-all text-center cursor-pointer"
             >
               Cancelar
             </Link>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+              disabled={isSubmitting || isReadOnly}
+              className="flex-1 rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white transition-all hover:bg-blue-500 disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-blue-500/10"
             >
-              {isSubmitting ? 'Salvando...' : 'Salvar Proposta'}
+              <FileCheck2 className="h-4 w-4" /> {isSubmitting ? 'Salvando...' : 'Salvar Proposta'}
             </button>
           </div>
         </div>

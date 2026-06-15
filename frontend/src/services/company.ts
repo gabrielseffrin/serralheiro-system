@@ -22,4 +22,9 @@ export const companyApi = {
     });
     return data;
   },
+
+  removeLogo: async (): Promise<{ data: Company }> => {
+    const { data } = await api.delete<{ data: Company }>('/company/logo');
+    return data;
+  },
 };
