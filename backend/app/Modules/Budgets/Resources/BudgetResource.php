@@ -36,6 +36,7 @@ class BudgetResource extends JsonResource
             'warranty_term' => $this->warranty_term,
             'notes' => $this->notes,
             'public_token' => $this->public_token,
+            'items_count' => $this->whenCounted('items'),
             'items' => BudgetItemResource::collection($this->whenLoaded('items')),
             'status_histories' => BudgetStatusHistoryResource::collection($this->whenLoaded('statusHistories')),
             'created_at' => $this->created_at,

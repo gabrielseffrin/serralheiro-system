@@ -18,7 +18,9 @@ import {
   ChevronLeft, 
   FileCheck2,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  Calendar,
+  FileText,
 } from 'lucide-react';
 
 type TabType = 'general' | 'items' | 'terms';
@@ -31,7 +33,6 @@ export default function BudgetFormPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
-  // Queries for catalog data
   const { data: customersData } = useQuery({
     queryKey: ['customers-form-list'],
     queryFn: () => customersApi.list(1),
@@ -66,7 +67,6 @@ export default function BudgetFormPage() {
   const profileColors = colors.filter((c) => c.type === 'profile');
   const accessoryColors = colors.filter((c) => c.type === 'accessory');
 
-  // Query for edit budget details
   const { data: budgetData, isLoading: loadingBudget } = useQuery({
     queryKey: ['budget-edit', id],
     queryFn: () => budgetsApi.get(id!),
@@ -87,7 +87,6 @@ export default function BudgetFormPage() {
     expired: 'Expirado',
   };
 
-  // React Hook Form Setup
   const {
     register,
     handleSubmit,
@@ -120,6 +119,7 @@ export default function BudgetFormPage() {
           glass_type_id: '',
           accessory_color_id: '',
           unit_price: null,
+          delivery_date: '',
           notes: '',
         },
       ],
@@ -131,11 +131,9 @@ export default function BudgetFormPage() {
     name: 'items',
   });
 
-  // Watch form fields for real-time total calculations
   const watchedItems = formWatch('items') || [];
   const watchedDiscount = formWatch('discount') || 0;
 
-  // Load editing budget details into form
   useEffect(() => {
     if (isEditMode && budget) {
       reset({
@@ -153,19 +151,19 @@ export default function BudgetFormPage() {
           quantity: item.quantity,
           width: item.width,
           height: item.height,
-          weight: item.weight,
+          weight: item.weight ? parseFloat(item.weight) : null,
           line_id: item.line_id || '',
           profile_color_id: item.profile_color_id || '',
           glass_type_id: item.glass_type_id || '',
           accessory_color_id: item.accessory_color_id || '',
           unit_price: parseFloat(item.unit_price) || null,
+          delivery_date: item.delivery_date || '',
           notes: item.notes || '',
         })) : [],
       });
     }
   }, [isEditMode, budget, reset]);
 
-  // Mutations
   const createMutation = useMutation({
     mutationFn: (payload: any) => budgetsApi.create(payload),
     onSuccess: () => {
@@ -190,7 +188,6 @@ export default function BudgetFormPage() {
     },
   });
 
-  // Real-time calculation helper
   const calculateItemValues = (item: any) => {
     if (!item.product_id) return { unit_price: 0, total: 0, area: 0 };
     const product = products.find((p) => p.id === item.product_id);
@@ -223,29 +220,29 @@ export default function BudgetFormPage() {
     return { unit_price: unit, total, area };
   };
 
-  // Compute subtotal and grand totals dynamically
   const calculatedItems = watchedItems.map((item) => calculateItemValues(item));
   const subtotal = calculatedItems.reduce((acc, curr) => acc + curr.total, 0);
   const grandTotal = Math.max(0, subtotal - watchedDiscount);
 
-  // Auto populate values when product changes
   const handleProductChange = (index: number, productId: string) => {
     if (!productId) return;
     const product = products.find((p) => p.id === productId);
     if (product) {
       const requiresDims = product.requires_dimensions || product.pricing_type === 'per_m2' || product.pricing_type === 'per_meter' || product.pricing_type === 'per_kg';
       setValue(`items.${index}.line_id`, product.default_line_id || '');
+      setValue(`items.${index}.profile_color_id`, product.default_profile_color_id || '');
+      setValue(`items.${index}.glass_type_id`, product.default_glass_type_id || '');
+      setValue(`items.${index}.accessory_color_id`, product.default_accessory_color_id || '');
       setValue(`items.${index}.unit_price`, parseFloat(product.base_price));
       setValue(`items.${index}.width`, requiresDims ? 1000 : null);
       setValue(`items.${index}.height`, requiresDims ? 1000 : null);
-      setValue(`items.${index}.weight`, product.pricing_type === 'per_kg' ? 1 : null);
+      setValue(`items.${index}.weight`, product.pricing_type === 'per_kg' ? (product.default_weight ? parseFloat(product.default_weight) : 1) : null);
     }
   };
 
   const onSubmit: SubmitHandler<BudgetFormData> = async (formData) => {
     setErrorMessage(null);
 
-    // Sanitize and structure the items array for submission
     const sanitizedItems = formData.items.map((item, idx) => {
       const calc = calculatedItems[idx];
       
@@ -262,6 +259,7 @@ export default function BudgetFormPage() {
         glass_type_id: item.glass_type_id || null,
         accessory_color_id: item.accessory_color_id || null,
         unit_price: calc.unit_price,
+        delivery_date: item.delivery_date || null,
         notes: item.notes || null,
       };
     });
@@ -304,7 +302,6 @@ export default function BudgetFormPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/budgets" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors">
           <ArrowLeft className="h-4.5 w-4.5" />
@@ -333,11 +330,10 @@ export default function BudgetFormPage() {
 
       {errorMessage && (
         <div className="rounded-xl border border-red-800 bg-red-950/20 p-4 text-sm text-red-400 animate-scale-up">
-          ⚠️ {errorMessage}
+          {errorMessage}
         </div>
       )}
 
-      {/* Tabs bar */}
       <div className="border-b border-slate-800/80 flex gap-2 overflow-x-auto pb-px">
         <button
           type="button"
@@ -375,10 +371,8 @@ export default function BudgetFormPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Side: Step View Form Panels */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* TAB 1: IDENTIFICATION */}
           {activeTab === 'general' && (
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-6 space-y-6 animate-fade-in">
               <h3 className="text-md font-bold text-white border-b border-slate-800/60 pb-2 flex items-center gap-2">
@@ -422,7 +416,6 @@ export default function BudgetFormPage() {
             </div>
           )}
 
-          {/* TAB 2: ITEMS LIST EDITOR */}
           {activeTab === 'items' && (
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
@@ -442,11 +435,13 @@ export default function BudgetFormPage() {
                       quantity: 1,
                       width: null,
                       height: null,
+                      weight: null,
                       line_id: '',
                       profile_color_id: '',
                       glass_type_id: '',
                       accessory_color_id: '',
                       unit_price: null,
+                      delivery_date: '',
                       notes: '',
                     })
                   }
@@ -463,8 +458,8 @@ export default function BudgetFormPage() {
                 const selectedProduct = products.find((p) => p.id === itemWatch.product_id);
                 const calculations = calculatedItems[index] || { unit_price: 0, total: 0, area: 0 };
                 const requiresDims = selectedProduct?.requires_dimensions || selectedProduct?.pricing_type === 'per_m2' || selectedProduct?.pricing_type === 'per_meter' || selectedProduct?.pricing_type === 'per_kg';
+                const isProductInactive = selectedProduct && !selectedProduct.active;
 
-                // Color Hex previews
                 const pColor = profileColors.find(c => c.id === itemWatch.profile_color_id);
                 const aColor = accessoryColors.find(c => c.id === itemWatch.accessory_color_id);
 
@@ -486,7 +481,6 @@ export default function BudgetFormPage() {
                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Item #{index + 1}</span>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Product Selection */}
                       <div className="md:col-span-2">
                         <label className="mb-1 block text-[11px] font-semibold text-slate-400">Esquadria / Modelo *</label>
                         <select
@@ -497,13 +491,17 @@ export default function BudgetFormPage() {
                           <option value="">Selecione um produto do catálogo</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.name} ({p.pricing_type === 'fixed' ? 'Preço Fixo' : p.pricing_type === 'per_m2' ? 'Por m²' : p.pricing_type === 'per_meter' ? 'Por Metro Linear' : p.pricing_type === 'per_kg' ? 'Por Peso (kg)' : p.pricing_type})
+                              {p.name}{p.code ? ` [${p.code}]` : ''} ({p.pricing_type === 'fixed' ? 'Preço Fixo' : p.pricing_type === 'per_m2' ? 'Por m²' : p.pricing_type === 'per_meter' ? 'Por Metro Linear' : p.pricing_type === 'per_kg' ? 'Por Peso (kg)' : p.pricing_type}){!p.active ? ' - INATIVO' : ''}
                             </option>
                           ))}
                         </select>
+                        {isProductInactive && (
+                          <p className="mt-1 text-[10px] text-amber-400 font-semibold flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" /> Este produto está inativo e não pode ser selecionado em novos orçamentos.
+                          </p>
+                        )}
                       </div>
 
-                      {/* Quantity */}
                       <div>
                         <label className="mb-1 block text-[11px] font-semibold text-slate-400">Quantidade *</label>
                         <input
@@ -514,7 +512,6 @@ export default function BudgetFormPage() {
                       </div>
                     </div>
 
-                    {/* Dimensions conditional inputs */}
                     {requiresDims && (
                       <div className={`grid gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850 ${selectedProduct?.pricing_type === 'per_kg' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}>
                         <div>
@@ -525,8 +522,11 @@ export default function BudgetFormPage() {
                             placeholder="Ex: 1200"
                             className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                           />
-                          {selectedProduct?.min_width && (
+                          {selectedProduct?.min_width != null && (
                             <span className="text-[10px] text-slate-550 block mt-1">Largura Mínima: {selectedProduct.min_width}mm</span>
+                          )}
+                          {selectedProduct?.max_width != null && (
+                            <span className="text-[10px] text-slate-550 block mt-0.5">Largura Máxima: {selectedProduct.max_width}mm</span>
                           )}
                         </div>
                         <div>
@@ -537,8 +537,11 @@ export default function BudgetFormPage() {
                             placeholder="Ex: 1500"
                             className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                           />
-                          {selectedProduct?.min_height && (
+                          {selectedProduct?.min_height != null && (
                             <span className="text-[10px] text-slate-550 block mt-1">Altura Mínima: {selectedProduct.min_height}mm</span>
+                          )}
+                          {selectedProduct?.max_height != null && (
+                            <span className="text-[10px] text-slate-550 block mt-0.5">Altura Máxima: {selectedProduct.max_height}mm</span>
                           )}
                         </div>
                         {selectedProduct?.pricing_type === 'per_kg' && (
@@ -559,7 +562,6 @@ export default function BudgetFormPage() {
                       </div>
                     )}
 
-                    {/* Tag and Location */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="mb-1 block text-[11px] font-semibold text-slate-400">Sigla / Tag</label>
@@ -581,7 +583,30 @@ export default function BudgetFormPage() {
                       </div>
                     </div>
 
-                    {/* Advanced Item Catalogs (Line, Colors, Glass) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> Prazo de Entrega do Item
+                        </label>
+                        <input
+                          type="date"
+                          {...register(`items.${index}.delivery_date`)}
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450 flex items-center gap-1">
+                          <FileText className="h-3 w-3" /> Observações do Item
+                        </label>
+                        <input
+                          type="text"
+                          {...register(`items.${index}.notes`)}
+                          placeholder="Ex: Usar parafuso M6, incluir vedação"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/10 p-3.5 rounded-xl border border-slate-850/60">
                       <div>
                         <label className="mb-1.5 block text-[11px] font-semibold text-slate-450">Linha</label>
@@ -646,7 +671,6 @@ export default function BudgetFormPage() {
                       </div>
                     </div>
 
-                    {/* Calculations and Price Overrides */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-slate-800/80">
                       <div className="flex gap-4 text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                         {calculations.area > 0 && (
@@ -696,7 +720,6 @@ export default function BudgetFormPage() {
             </div>
           )}
 
-          {/* TAB 3: COMMERCIAL CONDITIONS */}
           {activeTab === 'terms' && (
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-6 space-y-4 animate-fade-in">
               <h3 className="text-md font-bold text-white border-b border-slate-800/60 pb-2 flex items-center gap-2">
@@ -757,10 +780,8 @@ export default function BudgetFormPage() {
 
         </div>
 
-        {/* Right Side: Sticky Pricing Summary & Actions panel */}
         <div className="lg:sticky lg:top-20 space-y-6">
           
-          {/* Card 3: Financial Summary */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-6 shadow-xl">
             <h3 className="text-md font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-blue-500" /> Resumo Financeiro
@@ -791,7 +812,6 @@ export default function BudgetFormPage() {
             </div>
           </div>
 
-          {/* Form Action Buttons */}
           <div className="flex gap-4">
             <Link
               to="/budgets"

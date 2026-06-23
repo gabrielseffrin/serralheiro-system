@@ -1,5 +1,5 @@
 import api from './api';
-import type { Product, ProductLine, ProductColor, GlassType, PaginatedResponse } from '@/types';
+import type { Product, ProductLine, ProductColor, GlassType, ProductCategory, PaginatedResponse } from '@/types';
 
 export const productsApi = {
   // Products CRUD
@@ -86,5 +86,25 @@ export const productsApi = {
 
   deleteGlassType: async (id: string): Promise<void> => {
     await api.delete(`/glass-types/${id}`);
+  },
+
+  // Categories CRUD
+  listCategories: async (): Promise<{ data: ProductCategory[] }> => {
+    const { data } = await api.get<{ data: ProductCategory[] }>('/product-categories');
+    return data;
+  },
+
+  createCategory: async (payload: Partial<ProductCategory>): Promise<{ data: ProductCategory }> => {
+    const { data } = await api.post<{ data: ProductCategory }>('/product-categories', payload);
+    return data;
+  },
+
+  updateCategory: async (id: string, payload: Partial<ProductCategory>): Promise<{ data: ProductCategory }> => {
+    const { data } = await api.put<{ data: ProductCategory }>(`/product-categories/${id}`, payload);
+    return data;
+  },
+
+  deleteCategory: async (id: string): Promise<void> => {
+    await api.delete(`/product-categories/${id}`);
   },
 };

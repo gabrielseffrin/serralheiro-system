@@ -7,44 +7,47 @@ use App\Modules\Products\Models\Product;
 use App\Modules\Products\Requests\StoreProductRequest;
 use App\Modules\Products\Requests\UpdateProductRequest;
 use App\Modules\Products\Resources\ProductResource;
+use App\Modules\Products\Services\ProductService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private readonly ProductService $productService,
+    ) {}
+
     public function index(): AnonymousResourceCollection
     {
-        $products = Product::with('defaultLine')->paginate(15);
+        $products = $this->productService->listPaginated();
 
         return ProductResource::collection($products);
     }
 
     public function show(Product $product): ProductResource
     {
-        $product->load('defaultLine');
+        $product->load(['defaultLine', 'category', 'defaultProfileColor', 'defaultAccessoryColor', 'defaultGlassType']);
 
         return new ProductResource($product);
     }
 
     public function store(StoreProductRequest $request): ProductResource
     {
-        $product = Product::create($request->validated());
-        $product->load('defaultLine');
+        $product = $this->productService->create($request->validated());
 
         return new ProductResource($product);
     }
 
     public function update(UpdateProductRequest $request, Product $product): ProductResource
     {
-        $product->update($request->validated());
-        $product->load('defaultLine');
+        $product = $this->productService->update($product, $request->validated());
 
         return new ProductResource($product);
     }
 
     public function destroy(Product $product): Response
     {
-        $product->delete();
+        $this->productService->delete($product);
 
         return response()->noContent();
     }

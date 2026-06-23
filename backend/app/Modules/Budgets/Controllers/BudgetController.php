@@ -27,8 +27,8 @@ class BudgetController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        // Paginate budgets, eager loading customer
         $budgets = Budget::with('customer')
+            ->withCount('items')
             ->orderBy('number', 'desc')
             ->orderBy('version', 'desc')
             ->paginate(15);

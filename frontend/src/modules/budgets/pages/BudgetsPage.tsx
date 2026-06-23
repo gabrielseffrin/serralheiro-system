@@ -10,18 +10,19 @@ import SearchInput from '@/components/SearchInput';
 import Pagination from '@/components/Pagination';
 import Modal from '@/components/Modal';
 import { useToast } from '@/hooks/useToast';
-import { 
-  Plus, 
-  Edit, 
-  Copy, 
-  GitBranch, 
-  Trash2, 
-  Download, 
-  Link2, 
-  Settings, 
-  AlertCircle,
-  MoreVertical
-} from 'lucide-react';
+  import { 
+    Plus, 
+    Edit, 
+    Copy, 
+    GitBranch, 
+    Trash2, 
+    Download, 
+    Link2, 
+    Settings, 
+    AlertCircle,
+    MoreVertical,
+    Package,
+  } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 
@@ -247,6 +248,7 @@ export default function BudgetsPage() {
                 <tr>
                   <th className="px-6 py-4.5">Código / Versão</th>
                   <th className="px-6 py-4.5">Cliente</th>
+                  <th className="px-6 py-4.5">Itens</th>
                   <th className="px-6 py-4.5">Data Vencimento</th>
                   <th className="px-6 py-4.5 text-right">Subtotal</th>
                   <th className="px-6 py-4.5 text-right">Desconto</th>
@@ -267,6 +269,12 @@ export default function BudgetsPage() {
                         </Link>
                       </td>
                       <td className="px-6 py-4 font-bold text-white">{budget.customer?.name || '-'}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-semibold text-slate-350">
+                          <Package className="h-3 w-3 text-slate-500" />
+                          {budget.items_count ?? 0} ite{(budget.items_count ?? 0) !== 1 ? 'ns' : 'm'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         <span className={isExpired ? 'text-red-450 font-bold' : ''}>
                           {formatDate(budget.expiration_date)}

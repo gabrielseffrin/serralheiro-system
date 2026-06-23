@@ -27,6 +27,15 @@ const PRICING_TYPES: Record<Product['pricing_type'], string> = {
   per_kg: 'Por Quilo (kg)',
 };
 
+const UNIT_LABELS: Record<string, string> = {
+  piece: 'Peça',
+  m2: 'Metro Quadrado (m²)',
+  linear_meter: 'Metro Linear (m)',
+  kg: 'Quilograma (kg)',
+  pair: 'Par',
+  set: 'Jogo',
+};
+
 export default function ProductsPage() {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,7 +45,6 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { message: successMsg, showToast } = useToast();
 
-  // Queries
   const { data: productsData, isLoading, isError } = useQuery({
     queryKey: ['products', currentPage],
     queryFn: () => productsApi.listProducts(currentPage),
@@ -47,11 +55,30 @@ export default function ProductsPage() {
     queryFn: () => productsApi.listLines(),
   });
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['product-categories-list'],
+    queryFn: () => productsApi.listCategories(),
+  });
+
+  const { data: colorsData } = useQuery({
+    queryKey: ['product-colors-list'],
+    queryFn: () => productsApi.listColors(),
+  });
+
+  const { data: glassData } = useQuery({
+    queryKey: ['product-glass-list'],
+    queryFn: () => productsApi.listGlassTypes(),
+  });
+
   const products = productsData?.data || [];
   const meta = productsData?.meta;
   const lines = linesData?.data || [];
+  const categories = categoriesData?.data || [];
+  const colors = colorsData?.data || [];
+  const glassTypes = glassData?.data || [];
+  const profileColors = colors.filter((c) => c.type === 'profile');
+  const accessoryColors = colors.filter((c) => c.type === 'accessory');
 
-  // Mutations
   const createMutation = useMutation({
     mutationFn: (payload: Partial<Product>) => productsApi.createProduct(payload),
     onSuccess: () => {
@@ -80,7 +107,6 @@ export default function ProductsPage() {
     },
   });
 
-  // React Hook Form
   const {
     register,
     handleSubmit,
@@ -91,13 +117,24 @@ export default function ProductsPage() {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
+      code: '',
       description: '',
+      category_id: '',
+      image_path: '',
       default_line_id: '',
       pricing_type: 'fixed',
+      unit: 'piece',
       base_price: 0,
+      cost_price: null,
       requires_dimensions: false,
       min_width: null,
       min_height: null,
+      max_width: null,
+      max_height: null,
+      default_weight: null,
+      default_profile_color_id: '',
+      default_accessory_color_id: '',
+      default_glass_type_id: '',
       active: true,
     },
   });
@@ -105,22 +142,30 @@ export default function ProductsPage() {
   const watchPricingType = watch('pricing_type');
   const watchRequiresDimensions = watch('requires_dimensions');
 
-  // Show dimension constraints if pricing is area-based (per_m2), linear meter (per_meter), weight (per_kg) or user checked requires_dimensions
   const showDimensions = watchPricingType === 'per_m2' || watchPricingType === 'per_meter' || watchPricingType === 'per_kg' || watchRequiresDimensions;
-
-
 
   const openCreateModal = () => {
     setEditingProduct(null);
     reset({
       name: '',
+      code: '',
       description: '',
+      category_id: '',
+      image_path: '',
       default_line_id: '',
       pricing_type: 'fixed',
+      unit: 'piece',
       base_price: 0,
+      cost_price: null,
       requires_dimensions: false,
       min_width: null,
       min_height: null,
+      max_width: null,
+      max_height: null,
+      default_weight: null,
+      default_profile_color_id: '',
+      default_accessory_color_id: '',
+      default_glass_type_id: '',
       active: true,
     });
     setIsModalOpen(true);
@@ -130,13 +175,24 @@ export default function ProductsPage() {
     setEditingProduct(product);
     reset({
       name: product.name,
+      code: product.code || '',
       description: product.description || '',
+      category_id: product.category_id || '',
+      image_path: product.image_path || '',
       default_line_id: product.default_line_id || '',
       pricing_type: product.pricing_type,
+      unit: product.unit || 'piece',
       base_price: parseFloat(product.base_price) || 0,
+      cost_price: product.cost_price ? parseFloat(product.cost_price) : null,
       requires_dimensions: product.requires_dimensions,
       min_width: product.min_width,
       min_height: product.min_height,
+      max_width: product.max_width,
+      max_height: product.max_height,
+      default_weight: product.default_weight ? parseFloat(product.default_weight) : null,
+      default_profile_color_id: product.default_profile_color_id || '',
+      default_accessory_color_id: product.default_accessory_color_id || '',
+      default_glass_type_id: product.default_glass_type_id || '',
       active: product.active,
     });
     setIsModalOpen(true);
@@ -150,13 +206,24 @@ export default function ProductsPage() {
   const onSubmit: SubmitHandler<ProductFormData> = async (formData) => {
     const payload: Partial<Product> = {
       name: formData.name,
+      code: formData.code || null,
       description: formData.description || null,
+      category_id: formData.category_id || null,
+      image_path: formData.image_path || null,
       default_line_id: formData.default_line_id || null,
       pricing_type: formData.pricing_type,
+      unit: formData.unit,
       base_price: formData.base_price.toString(),
+      cost_price: formData.cost_price != null ? formData.cost_price.toString() : null,
       requires_dimensions: formData.requires_dimensions,
       min_width: showDimensions ? formData.min_width : null,
       min_height: showDimensions ? formData.min_height : null,
+      max_width: showDimensions ? formData.max_width : null,
+      max_height: showDimensions ? formData.max_height : null,
+      default_weight: formData.default_weight != null ? formData.default_weight.toString() : null,
+      default_profile_color_id: formData.default_profile_color_id || null,
+      default_accessory_color_id: formData.default_accessory_color_id || null,
+      default_glass_type_id: formData.default_glass_type_id || null,
       active: formData.active,
     };
 
@@ -177,13 +244,11 @@ export default function ProductsPage() {
     }
   };
 
-
-
-  // Local filtering
   const filteredProducts = products.filter((product) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       product.name.toLowerCase().includes(searchLower) ||
+      (product.code && product.code.toLowerCase().includes(searchLower)) ||
       (product.description && product.description.toLowerCase().includes(searchLower)) ||
       (product.default_line?.name && product.default_line.name.toLowerCase().includes(searchLower))
     );
@@ -198,11 +263,8 @@ export default function ProductsPage() {
     );
   }
 
-
-
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Produtos e Modelos</h2>
@@ -216,21 +278,17 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      {/* Success Notification */}
       <Toast message={successMsg} />
 
-      {/* Filters and Table */}
       <div className="rounded-2xl border border-slate-800/80 bg-slate-900/30 overflow-hidden">
-        {/* Toolbar */}
         <div className="border-b border-slate-800/60 p-4">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Buscar por nome, descrição ou linha..."
+            placeholder="Buscar por nome, código, descrição ou linha..."
           />
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           {isLoading ? (
             <div className="flex h-48 flex-col items-center justify-center gap-3 text-slate-455">
@@ -246,11 +304,12 @@ export default function ProductsPage() {
             <table className="w-full border-collapse text-left text-sm text-slate-350">
               <thead className="bg-slate-950/40 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
                 <tr>
+                  <th className="px-6 py-4">Código</th>
                   <th className="px-6 py-4">Produto</th>
+                  <th className="px-6 py-4">Categoria</th>
                   <th className="px-6 py-4">Linha Padrão</th>
                   <th className="px-6 py-4">Precificação</th>
                   <th className="px-6 py-4">Preço Base</th>
-                  <th className="px-6 py-4">Dimensões</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
@@ -259,12 +318,30 @@ export default function ProductsPage() {
                 {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-slate-800/25 transition-colors">
                     <td className="px-6 py-4">
+                      {product.code ? (
+                        <span className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-mono font-bold text-slate-300">
+                          {product.code}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <div>
                         <p className="font-bold text-white">{product.name}</p>
                         {product.description && (
                           <p className="text-xs text-slate-450 line-clamp-1 mt-0.5">{product.description}</p>
                         )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-xs">
+                      {product.category ? (
+                        <span className="rounded-lg bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 text-violet-350">
+                          {product.category.name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-xs font-bold">
                       {product.default_line ? (
@@ -275,20 +352,12 @@ export default function ProductsPage() {
                         <span className="text-slate-600">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-400">{PRICING_TYPES[product.pricing_type]}</td>
+                    <td className="px-6 py-4 text-xs text-slate-400">
+                      <span>{PRICING_TYPES[product.pricing_type]}</span>
+                      <span className="text-slate-600 ml-1">({UNIT_LABELS[product.unit] || product.unit})</span>
+                    </td>
                     <td className="px-6 py-4 font-mono text-sm font-bold text-white">
                       {formatPrice(product.base_price)}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-400 leading-normal">
-                      {product.requires_dimensions || product.pricing_type === 'per_m2' || product.pricing_type === 'per_meter' || product.pricing_type === 'per_kg' ? (
-                        <span>
-                          {product.min_width ? `Largura min: ${product.min_width}mm` : 'L: Livre'}
-                          <br />
-                          {product.min_height ? `Altura min: ${product.min_height}mm` : 'A: Livre'}
-                        </span>
-                      ) : (
-                        <span className="text-slate-600">Não exige</span>
-                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -335,42 +404,69 @@ export default function ProductsPage() {
         />
       </div>
 
-      {/* Modal/Drawer Component */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingProduct ? 'Editar Produto' : 'Novo Produto'}
         description="Cadastre as especificações, preços e dimensões padrão da esquadria."
-        maxWidth="max-w-lg"
+        maxWidth="max-w-2xl"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Nome do Produto *</label>
-            <input
-              type="text"
-              {...register('name')}
-              className={inputStyle}
-              placeholder="Ex: Portão Basculante, Janela de Correr 2 Fg"
-            />
-            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Nome do Produto *</label>
+              <input
+                type="text"
+                {...register('name')}
+                className={inputStyle}
+                placeholder="Ex: Portão Basculante, Janela de Correr 2 Fg"
+              />
+              {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Código / SKU</label>
+              <input
+                type="text"
+                {...register('code')}
+                className={inputStyle}
+                placeholder="Ex: PT-001, JC-2F-BCO"
+              />
+              {errors.code && <p className="mt-1 text-xs text-red-400">{errors.code.message}</p>}
+            </div>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Linha de Alumínio Padrão</label>
-            <select
-              {...register('default_line_id')}
-              className={`${inputStyle} cursor-pointer`}
-            >
-              <option value="">Sem linha associada</option>
-              {lines.map((line) => (
-                <option key={line.id} value={line.id} className="bg-slate-900">
-                  {line.name} {!line.active && '(Inativa)'}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Categoria</label>
+              <select
+                {...register('category_id')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="">Sem categoria</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id} className="bg-slate-900">
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Linha de Alumínio Padrão</label>
+              <select
+                {...register('default_line_id')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="">Sem linha associada</option>
+                {lines.map((line) => (
+                  <option key={line.id} value={line.id} className="bg-slate-900">
+                    {line.name} {!line.active && '(Inativa)'}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Precificação *</label>
               <select
@@ -381,6 +477,20 @@ export default function ProductsPage() {
                 <option value="per_m2" className="bg-slate-900">Por Metro Quadrado (m²)</option>
                 <option value="per_meter" className="bg-slate-900">Por Metro Linear (m)</option>
                 <option value="per_kg" className="bg-slate-900">Por Peso (kg)</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Unidade *</label>
+              <select
+                {...register('unit')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="piece" className="bg-slate-900">Peça</option>
+                <option value="m2" className="bg-slate-900">Metro Quadrado (m²)</option>
+                <option value="linear_meter" className="bg-slate-900">Metro Linear (m)</option>
+                <option value="kg" className="bg-slate-900">Quilograma (kg)</option>
+                <option value="pair" className="bg-slate-900">Par</option>
+                <option value="set" className="bg-slate-900">Jogo</option>
               </select>
             </div>
             <div>
@@ -396,6 +506,31 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Preço de Custo (R$)</label>
+              <input
+                type="number"
+                step="0.0001"
+                {...register('cost_price', { valueAsNumber: true })}
+                className={inputStyle}
+                placeholder="Opcional"
+              />
+              {errors.cost_price && <p className="mt-1 text-xs text-red-400">{errors.cost_price.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Peso Padrão (kg)</label>
+              <input
+                type="number"
+                step="0.001"
+                {...register('default_weight', { valueAsNumber: true })}
+                className={inputStyle}
+                placeholder="Ex: 25.5"
+              />
+              {errors.default_weight && <p className="mt-1 text-xs text-red-400">{errors.default_weight.message}</p>}
+            </div>
+          </div>
+
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Descrição Comercial</label>
             <textarea
@@ -404,6 +539,46 @@ export default function ProductsPage() {
               className={inputStyle}
               placeholder="Ex: Modelo padrão, inclui trincos e guarnições..."
             />
+          </div>
+
+          {/* Cores e Vidro Padrão */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Cor Perfil Padrão</label>
+              <select
+                {...register('default_profile_color_id')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="">Nenhuma</option>
+                {profileColors.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Cor Acessório Padrão</label>
+              <select
+                {...register('default_accessory_color_id')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="">Nenhuma</option>
+                {accessoryColors.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Vidro Padrão</label>
+              <select
+                {...register('default_glass_type_id')}
+                className={`${inputStyle} cursor-pointer`}
+              >
+                <option value="">Nenhum</option>
+                {glassTypes.map((g) => (
+                  <option key={g.id} value={g.id} className="bg-slate-900">{g.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="border-t border-b border-slate-850 py-4 my-2 space-y-3">
@@ -441,9 +616,26 @@ export default function ProductsPage() {
                   />
                   {errors.min_height && <p className="mt-1 text-[10px] text-red-400">{errors.min_height.message}</p>}
                 </div>
-                <p className="col-span-2 text-[10px] text-slate-500 leading-normal">
-                  * Restrições ativadas: Os orçamentos bloquearão dimensões menores que o mínimo estipulado.
-                </p>
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Largura Máxima (mm)</label>
+                  <input
+                    type="number"
+                    {...register('max_width', { valueAsNumber: true })}
+                    className={`${inputStyle} py-1.5 px-3`}
+                    placeholder="Ex: 3000"
+                  />
+                  {errors.max_width && <p className="mt-1 text-[10px] text-red-400">{errors.max_width.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Altura Máxima (mm)</label>
+                  <input
+                    type="number"
+                    {...register('max_height', { valueAsNumber: true })}
+                    className={`${inputStyle} py-1.5 px-3`}
+                    placeholder="Ex: 2500"
+                  />
+                  {errors.max_height && <p className="mt-1 text-[10px] text-red-400">{errors.max_height.message}</p>}
+                </div>
               </div>
             )}
           </div>
@@ -479,7 +671,6 @@ export default function ProductsPage() {
         </form>
       </Modal>
 
-      {/* Custom Delete Confirmation Modal */}
       <ConfirmDialog
         isOpen={!!deletingProduct}
         title="Excluir Produto"
