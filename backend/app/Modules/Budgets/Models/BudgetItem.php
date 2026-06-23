@@ -30,6 +30,7 @@ class BudgetItem extends Model
         'width',
         'height',
         'calculated_area',
+        'weight',
         'line_id',
         'profile_color_id',
         'glass_type_id',
@@ -43,7 +44,8 @@ class BudgetItem extends Model
 
     protected $casts = [
         'calculated_area' => 'decimal:4',
-        'unit_price' => 'decimal:2',
+        'weight' => 'decimal:3',
+        'unit_price' => 'decimal:4',
         'total' => 'decimal:2',
         'delivery_date' => 'date',
     ];

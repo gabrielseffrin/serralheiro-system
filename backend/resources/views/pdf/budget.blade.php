@@ -44,9 +44,14 @@
 
         {{-- Dados da empresa --}}
         <div>
-            @if($budget->company->logo)
+            @if($budget->company->logo && \Illuminate\Support\Facades\Storage::disk('public')->exists($budget->company->logo))
+                @php
+                    $logoData = base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($budget->company->logo));
+                    $extension = pathinfo($budget->company->logo, PATHINFO_EXTENSION);
+                    $logoMime = 'image/' . ($extension === 'svg' ? 'svg+xml' : $extension);
+                @endphp
                 <img
-                    src="{{ asset('storage/' . $budget->company->logo) }}"
+                    src="data:{{ $logoMime }};base64,{{ $logoData }}"
                     alt="Logo {{ $budget->company->name }}"
                     class="h-20 object-contain mb-3"
                 >

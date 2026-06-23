@@ -28,6 +28,7 @@ class BudgetItemResource extends JsonResource
             'width' => $this->width,
             'height' => $this->height,
             'calculated_area' => $this->calculated_area,
+            'weight' => $this->weight,
             'line_id' => $this->line_id,
             'line' => new ProductLineResource($this->whenLoaded('line')),
             'profile_color_id' => $this->profile_color_id,
