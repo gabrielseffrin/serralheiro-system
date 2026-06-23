@@ -69,6 +69,12 @@ it('calculates prices correctly based on pricing type', function () {
         'base_price' => 150.00, // R$ 150 per linear meter
     ]);
 
+    // 4. Weight Pricing Product
+    $perKgProduct = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_kg',
+        'base_price' => 80.00, // R$ 80 per kg
+    ]);
+
     $items = [
         [
             'product_id' => $fixedProduct->id,
@@ -87,6 +93,11 @@ it('calculates prices correctly based on pricing type', function () {
             'width' => 1000, // 1m
             'height' => 1000, // 1m
         ],
+        [
+            'product_id' => $perKgProduct->id,
+            'quantity' => 2,
+            'weight' => 15.500, // 15.5 kg
+        ],
     ];
 
     $budget = $this->budgetService->create([
@@ -99,7 +110,7 @@ it('calculates prices correctly based on pricing type', function () {
     expect($budget->version)->toBe(1);
 
     $dbItems = $budget->items()->get();
-    expect($dbItems)->toHaveCount(3);
+    expect($dbItems)->toHaveCount(4);
 
     // Item 1 (fixed override)
     expect((float) $dbItems[0]->unit_price)->toBe(450.00);
@@ -114,9 +125,14 @@ it('calculates prices correctly based on pricing type', function () {
     expect((float) $dbItems[2]->unit_price)->toBe(600.00);
     expect((float) $dbItems[2]->total)->toBe(1800.00);
 
+    // Item 4 (weight pricing)
+    expect((float) $dbItems[3]->weight)->toBe(15.500);
+    expect((float) $dbItems[3]->unit_price)->toBe(1240.00);
+    expect((float) $dbItems[3]->total)->toBe(2480.00);
+
     // Budget totals
-    expect((float) $budget->subtotal)->toBe(3060.00);
-    expect((float) $budget->total)->toBe(2960.00);
+    expect((float) $budget->subtotal)->toBe(5540.00);
+    expect((float) $budget->total)->toBe(5440.00);
 });
 
 it('syncs items correctly during update', function () {

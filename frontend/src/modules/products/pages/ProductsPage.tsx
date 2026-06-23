@@ -105,8 +105,8 @@ export default function ProductsPage() {
   const watchPricingType = watch('pricing_type');
   const watchRequiresDimensions = watch('requires_dimensions');
 
-  // Show dimension constraints if pricing is area-based (per_m2) or user checked requires_dimensions
-  const showDimensions = watchPricingType === 'per_m2' || watchRequiresDimensions;
+  // Show dimension constraints if pricing is area-based (per_m2), linear meter (per_meter), weight (per_kg) or user checked requires_dimensions
+  const showDimensions = watchPricingType === 'per_m2' || watchPricingType === 'per_meter' || watchPricingType === 'per_kg' || watchRequiresDimensions;
 
 
 
@@ -280,7 +280,7 @@ export default function ProductsPage() {
                       {formatPrice(product.base_price)}
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-400 leading-normal">
-                      {product.requires_dimensions || product.pricing_type === 'per_m2' ? (
+                      {product.requires_dimensions || product.pricing_type === 'per_m2' || product.pricing_type === 'per_meter' || product.pricing_type === 'per_kg' ? (
                         <span>
                           {product.min_width ? `Largura min: ${product.min_width}mm` : 'L: Livre'}
                           <br />
@@ -387,10 +387,10 @@ export default function ProductsPage() {
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Preço Base (R$) *</label>
               <input
                 type="number"
-                step="0.01"
+                step="0.0001"
                 {...register('base_price', { valueAsNumber: true })}
                 className={inputStyle}
-                placeholder="0.00"
+                placeholder="0.0000"
               />
               {errors.base_price && <p className="mt-1 text-xs text-red-400">{errors.base_price.message}</p>}
             </div>

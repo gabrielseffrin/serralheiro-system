@@ -83,12 +83,12 @@ it('updates product belonging to the company', function () {
 
     $response->assertOk()
         ->assertJsonPath('data.name', 'Produto Atualizado')
-        ->assertJsonPath('data.base_price', '999.99');
+        ->assertJsonPath('data.base_price', '999.9900');
 
     $this->assertDatabaseHas('products', [
         'id' => $product->id,
         'name' => 'Produto Atualizado',
-        'base_price' => 999.99,
+        'base_price' => '999.9900',
     ]);
 });
 

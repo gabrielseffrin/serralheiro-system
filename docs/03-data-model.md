@@ -69,7 +69,7 @@ Product
 - description
 - default_line_id (UUID, FK product_lines, nullable)
 - pricing_type        // fixed | per_m2 | per_meter | per_kg
-- base_price          // decimal(12,2)
+- base_price          // decimal(12,4)
 - requires_dimensions // boolean
 - min_width           // int (mm)
 - min_height          // int (mm)
@@ -174,11 +174,12 @@ BudgetItem
 - width               // int (mm)
 - height              // int (mm)
 - calculated_area     // decimal(10,4) — m² computado
+- weight              // decimal(10,3) — peso informado em kg
 - line_id             // UUID, FK product_lines
 - profile_color_id    // UUID, FK product_colors (type=profile)
 - glass_type_id       // UUID, FK glass_types
 - accessory_color_id  // UUID, FK product_colors (type=accessory)
-- unit_price          // decimal(12,2)
+- unit_price          // decimal(12,4)
 - total               // decimal(12,2)
 - delivery_date       // date, nullable — entrega individual
 - notes
@@ -216,7 +217,7 @@ O Service de cálculo respeita `pricing_type`:
 | `fixed` | `unit_price` informado manualmente |
 | `per_m2` | `base_price × (width × height / 1.000.000)` |
 | `per_meter` | `base_price × perímetro` |
-| `per_kg` | `base_price × peso` (fase futura) |
+| `per_kg` | `base_price × peso` |
 
 Total do item: `unit_price × quantity`.
 Subtotal do orçamento: soma de todos os itens.

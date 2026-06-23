@@ -114,6 +114,7 @@ export default function BudgetFormPage() {
           quantity: 1,
           width: null,
           height: null,
+          weight: null,
           line_id: '',
           profile_color_id: '',
           glass_type_id: '',
@@ -152,6 +153,7 @@ export default function BudgetFormPage() {
           quantity: item.quantity,
           width: item.width,
           height: item.height,
+          weight: item.weight,
           line_id: item.line_id || '',
           profile_color_id: item.profile_color_id || '',
           glass_type_id: item.glass_type_id || '',
@@ -208,11 +210,14 @@ export default function BudgetFormPage() {
     } else if (product.pricing_type === 'per_meter') {
       const perimeter = (2 * (w + h)) / 1000;
       unit = base * perimeter;
+    } else if (product.pricing_type === 'per_kg') {
+      const weight = parseFloat(item.weight) || 0;
+      unit = base * weight;
     } else {
       unit = item.unit_price !== null && item.unit_price !== undefined ? parseFloat(item.unit_price) : base;
     }
 
-    unit = Math.round(unit * 100) / 100;
+    unit = Math.round(unit * 10000) / 10000;
     const total = Math.round(unit * qty * 100) / 100;
 
     return { unit_price: unit, total, area };
@@ -228,10 +233,12 @@ export default function BudgetFormPage() {
     if (!productId) return;
     const product = products.find((p) => p.id === productId);
     if (product) {
+      const requiresDims = product.requires_dimensions || product.pricing_type === 'per_m2' || product.pricing_type === 'per_meter' || product.pricing_type === 'per_kg';
       setValue(`items.${index}.line_id`, product.default_line_id || '');
       setValue(`items.${index}.unit_price`, parseFloat(product.base_price));
-      setValue(`items.${index}.width`, product.requires_dimensions ? 1000 : null);
-      setValue(`items.${index}.height`, product.requires_dimensions ? 1000 : null);
+      setValue(`items.${index}.width`, requiresDims ? 1000 : null);
+      setValue(`items.${index}.height`, requiresDims ? 1000 : null);
+      setValue(`items.${index}.weight`, product.pricing_type === 'per_kg' ? 1 : null);
     }
   };
 
@@ -249,6 +256,7 @@ export default function BudgetFormPage() {
         quantity: item.quantity,
         width: item.width || null,
         height: item.height || null,
+        weight: item.weight || null,
         line_id: item.line_id || null,
         profile_color_id: item.profile_color_id || null,
         glass_type_id: item.glass_type_id || null,
@@ -277,7 +285,12 @@ export default function BudgetFormPage() {
   };
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    }).format(val);
   };
 
   if (isEditMode && loadingBudget) {
@@ -449,7 +462,7 @@ export default function BudgetFormPage() {
                 const itemWatch = watchedItems[index] || {};
                 const selectedProduct = products.find((p) => p.id === itemWatch.product_id);
                 const calculations = calculatedItems[index] || { unit_price: 0, total: 0, area: 0 };
-                const requiresDims = selectedProduct?.requires_dimensions || selectedProduct?.pricing_type === 'per_m2' || selectedProduct?.pricing_type === 'per_meter';
+                const requiresDims = selectedProduct?.requires_dimensions || selectedProduct?.pricing_type === 'per_m2' || selectedProduct?.pricing_type === 'per_meter' || selectedProduct?.pricing_type === 'per_kg';
 
                 // Color Hex previews
                 const pColor = profileColors.find(c => c.id === itemWatch.profile_color_id);
@@ -484,7 +497,7 @@ export default function BudgetFormPage() {
                           <option value="">Selecione um produto do catálogo</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.name} ({p.pricing_type === 'fixed' ? 'Preço Fixo' : p.pricing_type === 'per_m2' ? 'Por m²' : 'Por Metro Lineal'})
+                              {p.name} ({p.pricing_type === 'fixed' ? 'Preço Fixo' : p.pricing_type === 'per_m2' ? 'Por m²' : p.pricing_type === 'per_meter' ? 'Por Metro Linear' : p.pricing_type === 'per_kg' ? 'Por Peso (kg)' : p.pricing_type})
                             </option>
                           ))}
                         </select>
@@ -503,7 +516,7 @@ export default function BudgetFormPage() {
 
                     {/* Dimensions conditional inputs */}
                     {requiresDims && (
-                      <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850">
+                      <div className={`grid gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850 ${selectedProduct?.pricing_type === 'per_kg' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}>
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold text-slate-400">Largura (mm) *</label>
                           <input
@@ -528,6 +541,21 @@ export default function BudgetFormPage() {
                             <span className="text-[10px] text-slate-550 block mt-1">Altura Mínima: {selectedProduct.min_height}mm</span>
                           )}
                         </div>
+                        {selectedProduct?.pricing_type === 'per_kg' && (
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-400">Peso Total (kg) *</label>
+                            <input
+                              type="number"
+                              step="0.001"
+                              {...register(`items.${index}.weight`, { valueAsNumber: true })}
+                              placeholder="Ex: 15.5"
+                              className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                            />
+                            <span className="text-[10px] text-slate-550 block mt-1">
+                              Preço Base: R$ {parseFloat(selectedProduct.base_price).toFixed(2)}/kg
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -633,7 +661,7 @@ export default function BudgetFormPage() {
                             <label className="text-[10px] text-slate-450 uppercase font-bold whitespace-nowrap">Preço de Ajuste (R$):</label>
                             <input
                               type="number"
-                              step="0.01"
+                              step="0.0001"
                               {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
                               className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1 text-xs text-white w-24 text-right focus:border-blue-500 focus:outline-none font-mono"
                             />

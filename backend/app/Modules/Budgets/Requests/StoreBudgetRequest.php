@@ -39,6 +39,7 @@ class StoreBudgetRequest extends FormRequest
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.width' => ['nullable', 'integer', 'min:0'],
             'items.*.height' => ['nullable', 'integer', 'min:0'],
+            'items.*.weight' => ['nullable', 'numeric', 'min:0'],
             'items.*.line_id' => [
                 'nullable',
                 'string',

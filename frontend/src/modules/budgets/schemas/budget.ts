@@ -7,6 +7,7 @@ export const budgetItemSchema = z.object({
   quantity: z.number().int().min(1, 'Mínimo de 1 unidade'),
   width: z.number().int('Largura deve ser inteiro').min(0, 'Largura inválida').nullable().optional().or(z.nan().transform(() => null)),
   height: z.number().int('Altura deve ser inteiro').min(0, 'Altura inválida').nullable().optional().or(z.nan().transform(() => null)),
+  weight: z.number().min(0, 'Peso inválido').nullable().optional().or(z.nan().transform(() => null)),
   line_id: z.string().nullable().optional().or(z.literal('')),
   profile_color_id: z.string().nullable().optional().or(z.literal('')),
   glass_type_id: z.string().nullable().optional().or(z.literal('')),

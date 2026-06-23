@@ -41,16 +41,24 @@ class BudgetCalculator
                 }
                 break;
 
-            case 'fixed':
             case 'per_kg':
+                $weight = isset($itemData['weight']) ? (float) $itemData['weight'] : null;
+                if ($weight) {
+                    $unitPrice = $basePrice * $weight;
+                } else {
+                    $unitPrice = isset($itemData['unit_price']) ? (float) $itemData['unit_price'] : $basePrice;
+                }
+                break;
+
+            case 'fixed':
             default:
-                // For fixed or weight (future), unit_price is manually entered or falls back to base_price
+                // For fixed, unit_price is manually entered or falls back to base_price
                 $unitPrice = isset($itemData['unit_price']) ? (float) $itemData['unit_price'] : $basePrice;
                 break;
         }
 
         // Round decimal values
-        $unitPrice = round($unitPrice, 2);
+        $unitPrice = round($unitPrice, 4);
         $total = round($unitPrice * $quantity, 2);
 
         return [

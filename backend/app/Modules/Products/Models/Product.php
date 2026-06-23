@@ -35,7 +35,7 @@ class Product extends Model
     protected $casts = [
         'requires_dimensions' => 'boolean',
         'active' => 'boolean',
-        'base_price' => 'decimal:2',
+        'base_price' => 'decimal:4',
         'min_width' => 'integer',
         'min_height' => 'integer',
     ];
