@@ -13,6 +13,7 @@ export const budgetItemSchema = z.object({
   glass_type_id: z.string().nullable().optional().or(z.literal('')),
   accessory_color_id: z.string().nullable().optional().or(z.literal('')),
   unit_price: z.number().min(0, 'Preço unitário inválido').nullable().optional().or(z.nan().transform(() => null)),
+  delivery_date: z.string().nullable().optional().or(z.literal('')),
   notes: z.string().nullable().optional().or(z.literal('')),
 });
 

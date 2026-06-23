@@ -49,15 +49,16 @@ class BudgetService
                     'width' => $itemData['width'] ?? null,
                     'height' => $itemData['height'] ?? null,
                     'calculated_area' => $calculations['calculated_area'],
-                    'weight' => $itemData['weight'] ?? null,
+                    'weight' => $itemData['weight'] ?? $product->default_weight,
                     'line_id' => $itemData['line_id'] ?? $product->default_line_id,
-                    'profile_color_id' => $itemData['profile_color_id'] ?? null,
-                    'glass_type_id' => $itemData['glass_type_id'] ?? null,
-                    'accessory_color_id' => $itemData['accessory_color_id'] ?? null,
+                    'profile_color_id' => $itemData['profile_color_id'] ?? $product->default_profile_color_id,
+                    'glass_type_id' => $itemData['glass_type_id'] ?? $product->default_glass_type_id,
+                    'accessory_color_id' => $itemData['accessory_color_id'] ?? $product->default_accessory_color_id,
                     'unit_price' => $calculations['unit_price'],
                     'total' => $calculations['total'],
                     'delivery_date' => $itemData['delivery_date'] ?? null,
                     'notes' => $itemData['notes'] ?? null,
+                    'image_path' => $itemData['image_path'] ?? null,
                 ]);
             }
 
@@ -112,15 +113,16 @@ class BudgetService
                     'width' => $itemData['width'] ?? null,
                     'height' => $itemData['height'] ?? null,
                     'calculated_area' => $calculations['calculated_area'],
-                    'weight' => $itemData['weight'] ?? null,
+                    'weight' => $itemData['weight'] ?? $product->default_weight,
                     'line_id' => $itemData['line_id'] ?? $product->default_line_id,
-                    'profile_color_id' => $itemData['profile_color_id'] ?? null,
-                    'glass_type_id' => $itemData['glass_type_id'] ?? null,
-                    'accessory_color_id' => $itemData['accessory_color_id'] ?? null,
+                    'profile_color_id' => $itemData['profile_color_id'] ?? $product->default_profile_color_id,
+                    'glass_type_id' => $itemData['glass_type_id'] ?? $product->default_glass_type_id,
+                    'accessory_color_id' => $itemData['accessory_color_id'] ?? $product->default_accessory_color_id,
                     'unit_price' => $calculations['unit_price'],
                     'total' => $calculations['total'],
                     'delivery_date' => $itemData['delivery_date'] ?? null,
                     'notes' => $itemData['notes'] ?? null,
+                    'image_path' => $itemData['image_path'] ?? null,
                 ]);
             }
 
