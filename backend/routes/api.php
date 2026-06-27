@@ -4,6 +4,7 @@ use App\Modules\Auth\Controllers\ForgotPasswordController;
 use App\Modules\Auth\Controllers\LoginController;
 use App\Modules\Auth\Controllers\LogoutController;
 use App\Modules\Auth\Controllers\MeController;
+use App\Modules\Auth\Controllers\ResetPasswordController;
 use App\Modules\Budgets\Controllers\BudgetController;
 use App\Modules\Budgets\Controllers\DashboardController;
 use App\Modules\Budgets\Controllers\PublicBudgetController;
@@ -20,16 +21,17 @@ use Illuminate\Support\Facades\Route;
 
 // Auth routes (public)
 Route::prefix('auth')->group(function () {
-    Route::post('/login', LoginController::class);
-    Route::post('/forgot-password', ForgotPasswordController::class);
+    Route::post('/login', LoginController::class)->middleware('throttle:login');
+    Route::post('/forgot-password', ForgotPasswordController::class)->middleware('throttle:forgot-password');
+    Route::post('/reset-password', ResetPasswordController::class)->middleware('throttle:forgot-password');
 });
 
 // Public budget routes (guest access)
-Route::prefix('public')->group(function () {
+Route::prefix('public')->middleware('throttle:public-budget')->group(function () {
     Route::get('/budgets/{token}', [PublicBudgetController::class, 'show']);
     Route::get('/budgets/{token}/pdf', [PublicBudgetController::class, 'downloadPdf']);
-    Route::post('/budgets/{token}/approve', [PublicBudgetController::class, 'approve']);
-    Route::post('/budgets/{token}/reject', [PublicBudgetController::class, 'reject']);
+    Route::post('/budgets/{token}/approve', [PublicBudgetController::class, 'approve'])->middleware('throttle:public-budget-action');
+    Route::post('/budgets/{token}/reject', [PublicBudgetController::class, 'reject'])->middleware('throttle:public-budget-action');
 });
 
 Route::get('/reset-password/{token}', function (string $token) {
@@ -37,7 +39,7 @@ Route::get('/reset-password/{token}', function (string $token) {
 })->name('password.reset');
 
 // Auth routes (authenticated)
-Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/logout', LogoutController::class);
         Route::get('/me', MeController::class);
@@ -51,6 +53,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
 
     // Customer routes
     Route::apiResource('customers', CustomerController::class);
+    Route::get('/customers/{customer}/budgets', [CustomerController::class, 'budgets']);
 
     // Catalog routes
     Route::apiResource('product-lines', ProductLineController::class);

@@ -720,8 +720,7 @@ it('rejects budget update when status is not draft', function () {
         ],
     ]);
 
-    $response->assertStatus(422)
-        ->assertJsonValidationErrors(['status']);
+    $response->assertStatus(403);
 });
 
 it('rejects budget deletion when status is not draft', function () {
@@ -736,7 +735,476 @@ it('rejects budget deletion when status is not draft', function () {
 
     $response = $this->deleteJson("/api/budgets/{$budget->id}");
 
+    $response->assertStatus(403);
+});
+
+// --- Dimension validation tests ---
+
+it('requires dimensions when product requires_dimensions is true', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'fixed',
+        'unit' => 'piece',
+        'base_price' => 100,
+        'requires_dimensions' => true,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ]);
+
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['status']);
+        ->assertJsonValidationErrors(['items.0.width', 'items.0.height']);
+});
+
+it('requires dimensions for per_m2 pricing', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_m2',
+        'unit' => 'm2',
+        'base_price' => 100,
+        'requires_dimensions' => false,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['items.0.width', 'items.0.height']);
+});
+
+it('requires weight for per_kg pricing', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_kg',
+        'unit' => 'kg',
+        'base_price' => 50,
+        'requires_dimensions' => false,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['items.0.weight']);
+});
+
+it('rejects width below product min_width', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_m2',
+        'unit' => 'm2',
+        'base_price' => 100,
+        'requires_dimensions' => true,
+        'min_width' => 500,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1, 'width' => 200, 'height' => 1000],
+        ],
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['items.0.width']);
+});
+
+it('rejects height above product max_height', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_m2',
+        'unit' => 'm2',
+        'base_price' => 100,
+        'requires_dimensions' => true,
+        'max_height' => 2500,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1, 'width' => 1000, 'height' => 5000],
+        ],
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['items.0.height']);
+});
+
+it('does not require dimensions for fixed pricing without requires_dimensions', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'fixed',
+        'unit' => 'piece',
+        'base_price' => 100,
+        'requires_dimensions' => false,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ]);
+
+    $response->assertStatus(201);
+});
+
+// --- Server-side filtering tests ---
+
+it('filters budgets by status', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    $draft = Budget::factory()->for($company)->for($customer, 'customer')->create(['status' => 'draft']);
+    BudgetItem::factory()->for($draft)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    $sent = Budget::factory()->for($company)->for($customer, 'customer')->create(['status' => 'sent']);
+    BudgetItem::factory()->for($sent)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson('/api/budgets?status=sent');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.status', 'sent');
+});
+
+it('filters budgets by customer_id', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customerA = Customer::factory()->for($company)->create();
+    $customerB = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    $budgetA = Budget::factory()->for($company)->for($customerA, 'customer')->create(['status' => 'draft']);
+    BudgetItem::factory()->for($budgetA)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    $budgetB = Budget::factory()->for($company)->for($customerB, 'customer')->create(['status' => 'draft']);
+    BudgetItem::factory()->for($budgetB)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/budgets?customer_id={$customerA->id}");
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.customer_id', $customerA->id);
+});
+
+it('searches budgets by number', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    $budget = Budget::factory()->for($company)->for($customer, 'customer')->create(['number' => 12345, 'status' => 'draft']);
+    BudgetItem::factory()->for($budget)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson('/api/budgets?search=1234');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.number', 12345);
+});
+
+it('searches budgets by customer name', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create(['name' => 'Joao da Silva']);
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    $budget = Budget::factory()->for($company)->for($customer, 'customer')->create(['status' => 'draft']);
+    BudgetItem::factory()->for($budget)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson('/api/budgets?search=Silva');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data');
+});
+
+it('respects per_page parameter', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    for ($i = 0; $i < 5; $i++) {
+        $budget = Budget::factory()->for($company)->for($customer, 'customer')->create(['number' => $i + 1, 'status' => 'draft']);
+        BudgetItem::factory()->for($budget)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+    }
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson('/api/budgets?per_page=2');
+
+    $response->assertOk()
+        ->assertJsonCount(2, 'data');
+});
+
+it('filters budgets by date range', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    $old = Budget::factory()->for($company)->for($customer, 'customer')->create([
+        'number' => 1, 'status' => 'draft', 'created_at' => now()->subDays(30),
+    ]);
+    BudgetItem::factory()->for($old)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    $recent = Budget::factory()->for($company)->for($customer, 'customer')->create([
+        'number' => 2, 'status' => 'draft', 'created_at' => now()->subDay(),
+    ]);
+    BudgetItem::factory()->for($recent)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson('/api/budgets?from_date='.now()->subDays(7)->toDateString());
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.number', 2);
+});
+
+// --- Installation address tests ---
+
+it('creates budget with installation address', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'installation_address' => 'Rua das Flores, 123 - Centro',
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('data.installation_address', 'Rua das Flores, 123 - Centro');
+});
+
+// --- Company defaults tests ---
+
+it('prefills payment method from company default on create', function () {
+    $company = Company::factory()->create(['default_payment_method' => '50% entrada, 50% entrega']);
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('data.payment_method', '50% entrada, 50% entrega');
+});
+
+it('allows overriding company default on create', function () {
+    $company = Company::factory()->create(['default_payment_method' => '50% entrada']);
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'payment_method' => 'Pagamento à vista',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('data.payment_method', 'Pagamento à vista');
+});
+
+// --- Expiration auto-calculation tests ---
+
+it('auto-sets expiration date to 15 days when not provided', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+    ]);
+
+    $response->assertStatus(201);
+    $expiration = $response->json('data.expiration_date');
+    expect($expiration)->toBe(now()->addDays(15)->toDateString());
+});
+
+// --- Glass/weight totals tests ---
+
+it('calculates total glass area from items with glass type', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $glass = \App\Modules\Products\Models\GlassType::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_m2', 'unit' => 'm2', 'base_price' => 100, 'requires_dimensions' => true,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1, 'width' => 2000, 'height' => 1500, 'glass_type_id' => $glass->id],
+            ['product_id' => $product->id, 'quantity' => 1, 'width' => 1000, 'height' => 1000],
+        ],
+    ]);
+
+    $response->assertStatus(201);
+    $area = (float) $response->json('data.total_glass_area');
+    // First item: 2000*1500/1000000 = 3.0 m2
+    expect($area)->toBe(3.0);
+});
+
+it('calculates total weight from items', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create([
+        'pricing_type' => 'per_kg', 'unit' => 'kg', 'base_price' => 50, 'requires_dimensions' => false,
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson('/api/budgets', [
+        'customer_id' => $customer->id,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1, 'weight' => 15.5],
+            ['product_id' => $product->id, 'quantity' => 2, 'weight' => 10],
+        ],
+    ]);
+
+    $response->assertStatus(201);
+    $weight = (float) $response->json('data.total_weight');
+    // 15.5 + 10*2 = 35.5 (weight is per item, not multiplied by quantity in the item itself - actually weight IS per item)
+    // Wait, weight is stored on the item as total weight for that item. Two items: 15.5 + 20 = 35.5
+    // Actually weight is a single value per item. quantity=2 doesn't multiply weight alone.
+    // The total weight is sum of item weights: 15.5 + 10 = 25.5
+    expect($weight)->toBe(25.5);
+});
+
+// --- Customer budgets tests ---
+
+it('lists budgets for a specific customer', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->for($company)->create();
+    $customer = Customer::factory()->for($company)->create();
+    $otherCustomer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+
+    $budget1 = Budget::factory()->for($company)->for($customer, 'customer')->create(['number' => 1, 'status' => 'draft']);
+    BudgetItem::factory()->for($budget1)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    $budget2 = Budget::factory()->for($company)->for($otherCustomer, 'customer')->create(['number' => 2, 'status' => 'draft']);
+    BudgetItem::factory()->for($budget2)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/customers/{$customer->id}/budgets");
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.customer_id', $customer->id);
+});
+
+// --- IP and signer capture tests ---
+
+it('captures IP and signer name on approve', function () {
+    $company = Company::factory()->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+    $budget = Budget::factory()->for($company)->for($customer, 'customer')->create(['status' => 'sent']);
+    BudgetItem::factory()->for($budget)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    $response = $this->postJson("/api/public/budgets/{$budget->public_token}/approve", [
+        'signer_name' => 'João Silva',
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.signer_name', 'João Silva');
+
+    $budget->refresh();
+    expect($budget->approved_at)->not->toBeNull();
+    expect($budget->approved_ip)->not->toBeNull();
+    expect($budget->signer_name)->toBe('João Silva');
+});
+
+it('captures IP and signer name on reject', function () {
+    $company = Company::factory()->create();
+    $customer = Customer::factory()->for($company)->create();
+    $product = Product::factory()->for($company)->create(['pricing_type' => 'fixed', 'unit' => 'piece', 'base_price' => 100]);
+    $budget = Budget::factory()->for($company)->for($customer, 'customer')->create(['status' => 'sent']);
+    BudgetItem::factory()->for($budget)->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100]);
+
+    $response = $this->postJson("/api/public/budgets/{$budget->public_token}/reject", [
+        'signer_name' => 'Maria Santos',
+        'notes' => 'Valor acima do esperado',
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.signer_name', 'Maria Santos');
+
+    $budget->refresh();
+    expect($budget->rejected_at)->not->toBeNull();
+    expect($budget->rejected_ip)->not->toBeNull();
 });
 

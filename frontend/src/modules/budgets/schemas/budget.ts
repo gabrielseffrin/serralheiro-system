@@ -25,6 +25,7 @@ export const budgetSchema = z.object({
   delivery_term: z.string().nullable().optional().or(z.literal('')),
   warranty_term: z.string().nullable().optional().or(z.literal('')),
   notes: z.string().nullable().optional().or(z.literal('')),
+  installation_address: z.string().nullable().optional().or(z.literal('')),
   items: z.array(budgetItemSchema).min(1, 'Adicione pelo menos um item ao orçamento'),
 });
 

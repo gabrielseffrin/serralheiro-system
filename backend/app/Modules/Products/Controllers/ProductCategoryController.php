@@ -12,6 +12,11 @@ use Illuminate\Http\Response;
 
 class ProductCategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(ProductCategory::class, 'product_category');
+    }
+
     public function index(): AnonymousResourceCollection
     {
         $categories = ProductCategory::paginate(50);

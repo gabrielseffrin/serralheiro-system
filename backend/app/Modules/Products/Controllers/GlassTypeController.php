@@ -12,6 +12,11 @@ use Illuminate\Http\Response;
 
 class GlassTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(GlassType::class, 'glass_type');
+    }
+
     public function index(): AnonymousResourceCollection
     {
         $types = GlassType::all();

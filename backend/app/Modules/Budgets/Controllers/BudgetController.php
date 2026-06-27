@@ -23,15 +23,45 @@ class BudgetController extends Controller
     public function __construct(BudgetService $budgetService)
     {
         $this->budgetService = $budgetService;
+        $this->authorizeResource(Budget::class, 'budget');
     }
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $budgets = Budget::with('customer')
-            ->withCount('items')
+        $query = Budget::with('customer')->withCount('items');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                  ->orWhereHas('customer', fn ($c) =>
+                      $c->where('name', 'like', "%{$search}%")
+                  );
+            });
+        }
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        $perPage = min((int) $request->input('per_page', 15), 100);
+
+        $budgets = $query
             ->orderBy('number', 'desc')
             ->orderBy('version', 'desc')
-            ->paginate(15);
+            ->paginate($perPage);
 
         return BudgetResource::collection($budgets);
     }
@@ -97,6 +127,8 @@ class BudgetController extends Controller
 
     public function duplicate(Request $request, Budget $budget): BudgetResource
     {
+        $this->authorize('duplicate', $budget);
+
         $duplicated = $this->budgetService->duplicate($budget, $request->user()->id);
 
         return new BudgetResource($duplicated->load(['customer', 'items']));
@@ -104,6 +136,8 @@ class BudgetController extends Controller
 
     public function createVersion(Request $request, Budget $budget): BudgetResource
     {
+        $this->authorize('createVersion', $budget);
+
         $newVersion = $this->budgetService->createVersion($budget, $request->user()->id);
 
         return new BudgetResource($newVersion->load(['customer', 'items']));
@@ -111,6 +145,8 @@ class BudgetController extends Controller
 
     public function changeStatus(Request $request, Budget $budget): BudgetResource
     {
+        $this->authorize('changeStatus', $budget);
+
         $request->validate([
             'status' => ['required', 'string', Rule::in(['draft', 'sent', 'viewed', 'negotiating', 'approved', 'rejected', 'expired'])],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -128,6 +164,8 @@ class BudgetController extends Controller
 
     public function downloadPdf(Budget $budget): Response
     {
+        $this->authorize('downloadPdf', $budget);
+
         $budget->load([
             'company',
             'customer',

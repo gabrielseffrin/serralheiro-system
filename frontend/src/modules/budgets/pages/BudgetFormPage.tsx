@@ -6,6 +6,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { budgetsApi } from '@/services/budgets';
 import { customersApi } from '@/services/customers';
 import { productsApi } from '@/services/products';
+import { companyApi } from '@/services/company';
 import { budgetSchema, type BudgetFormData } from '../schemas/budget';
 import { 
   User, 
@@ -58,11 +59,18 @@ export default function BudgetFormPage() {
     queryFn: () => productsApi.listGlassTypes(),
   });
 
+  const { data: companyData } = useQuery({
+    queryKey: ['company-defaults'],
+    queryFn: () => companyApi.get(),
+    enabled: !isEditMode,
+  });
+
   const customers = customersData?.data || [];
   const products = productsData?.data || [];
   const lines = linesData?.data || [];
   const colors = colorsData?.data || [];
   const glassTypes = glassData?.data || [];
+  const company = companyData?.data;
 
   const profileColors = colors.filter((c) => c.type === 'profile');
   const accessoryColors = colors.filter((c) => c.type === 'accessory');
@@ -105,6 +113,7 @@ export default function BudgetFormPage() {
       delivery_term: '',
       warranty_term: '',
       notes: '',
+      installation_address: '',
       items: [
         {
           product_id: '',
@@ -131,6 +140,15 @@ export default function BudgetFormPage() {
     name: 'items',
   });
 
+  // Pre-fill company defaults on create
+  useEffect(() => {
+    if (!isEditMode && company) {
+      setValue('payment_method', company.default_payment_method || '');
+      setValue('delivery_term', company.default_delivery_term || '');
+      setValue('warranty_term', company.default_warranty_term || '');
+    }
+  }, [isEditMode, company, setValue]);
+
   const watchedItems = formWatch('items') || [];
   const watchedDiscount = formWatch('discount') || 0;
 
@@ -144,6 +162,7 @@ export default function BudgetFormPage() {
         delivery_term: budget.delivery_term || '',
         warranty_term: budget.warranty_term || '',
         notes: budget.notes || '',
+        installation_address: budget.installation_address || '',
         items: budget.items ? budget.items.map((item) => ({
           product_id: item.product_id || '',
           tag: item.tag || '',
@@ -224,6 +243,15 @@ export default function BudgetFormPage() {
   const subtotal = calculatedItems.reduce((acc, curr) => acc + curr.total, 0);
   const grandTotal = Math.max(0, subtotal - watchedDiscount);
 
+  const totalGlassArea = watchedItems.reduce((acc, item) => {
+    if (!item.glass_type_id || !item.width || !item.height) return acc;
+    return acc + ((parseFloat(item.width.toString()) * parseFloat(item.height.toString())) / 1000000);
+  }, 0);
+
+  const totalWeight = watchedItems.reduce((acc, item) => {
+    return acc + (parseFloat(item.weight?.toString() || '0') || 0);
+  }, 0);
+
   const handleProductChange = (index: number, productId: string) => {
     if (!productId) return;
     const product = products.find((p) => p.id === productId);
@@ -272,6 +300,7 @@ export default function BudgetFormPage() {
       delivery_term: formData.delivery_term || null,
       warranty_term: formData.warranty_term || null,
       notes: formData.notes || null,
+      installation_address: formData.installation_address || null,
       items: sanitizedItems,
     };
 
@@ -415,6 +444,19 @@ export default function BudgetFormPage() {
                   type="date"
                   {...register('expiration_date')}
                   className="w-full rounded-xl border border-input bg-input px-3 py-2.5 text-sm text-foreground focus:border-blue-500 focus:outline-none"
+                />
+                {!isEditMode && (
+                  <p className="mt-1 text-xs text-muted-foreground/60">Padrão: 15 dias a partir de hoje</p>
+                )}
+              </div>
+
+              <div className="pt-2">
+                <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Endereço de Instalação</label>
+                <textarea
+                  rows={2}
+                  {...register('installation_address')}
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2.5 text-sm text-foreground focus:border-blue-500 focus:outline-none"
+                  placeholder="Ex: Rua das Flores, 123 - Centro (se diferente do cadastro do cliente)"
                 />
               </div>
 
@@ -806,6 +848,20 @@ export default function BudgetFormPage() {
                 <span className="font-sans font-medium">Subtotal dos Itens:</span>
                 <span className="text-foreground font-bold">{formatCurrency(subtotal)}</span>
               </div>
+
+              {totalGlassArea > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span className="font-sans font-medium">Área Total de Vidro:</span>
+                  <span className="text-foreground font-bold">{totalGlassArea.toFixed(4)} m²</span>
+                </div>
+              )}
+
+              {totalWeight > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span className="font-sans font-medium">Peso Total:</span>
+                  <span className="text-foreground font-bold">{totalWeight.toFixed(3)} kg</span>
+                </div>
+              )}
 
               <div>
                 <label className="mb-1 block font-sans text-xs font-semibold text-muted-foreground">Desconto Comercial (R$)</label>

@@ -52,12 +52,19 @@ class PublicBudgetController extends Controller
 
         $request->validate([
             'notes' => ['nullable', 'string', 'max:1000'],
+            'signer_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         $notes = $request->input('notes');
         $statusNotes = 'Aprovado pelo cliente via link público'.($notes ? ": {$notes}" : '');
 
         $updatedBudget = $this->budgetService->changeStatus($budget, 'approved', 'customer', $statusNotes);
+
+        $updatedBudget->update([
+            'approved_at' => now(),
+            'approved_ip' => $request->ip(),
+            'signer_name' => $request->input('signer_name') ?? $updatedBudget->signer_name,
+        ]);
 
         return new BudgetResource($updatedBudget->load(['company', 'customer', 'items']));
     }
@@ -70,12 +77,19 @@ class PublicBudgetController extends Controller
 
         $request->validate([
             'notes' => ['nullable', 'string', 'max:1000'],
+            'signer_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         $notes = $request->input('notes');
         $statusNotes = 'Rejeitado pelo cliente via link público'.($notes ? ": {$notes}" : '');
 
         $updatedBudget = $this->budgetService->changeStatus($budget, 'rejected', 'customer', $statusNotes);
+
+        $updatedBudget->update([
+            'rejected_at' => now(),
+            'rejected_ip' => $request->ip(),
+            'signer_name' => $request->input('signer_name') ?? $updatedBudget->signer_name,
+        ]);
 
         return new BudgetResource($updatedBudget->load(['company', 'customer', 'items']));
     }

@@ -4,6 +4,7 @@ namespace App\Modules\Budgets\Services;
 
 use App\Modules\Budgets\Models\Budget;
 use App\Modules\Budgets\Models\BudgetItem;
+use App\Modules\Companies\Models\Company;
 use App\Modules\Products\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,7 +21,8 @@ class BudgetService
             $publicToken = Str::random(64);
             $initialStatus = $data['status'] ?? 'draft';
 
-            // Create budget
+            $company = Company::findOrFail($companyId);
+
             $budget = Budget::create([
                 'company_id' => $companyId,
                 'customer_id' => $data['customer_id'],
@@ -28,11 +30,12 @@ class BudgetService
                 'version' => 1,
                 'status' => $initialStatus,
                 'discount' => $data['discount'] ?? 0.00,
-                'expiration_date' => $data['expiration_date'] ?? null,
-                'payment_method' => $data['payment_method'] ?? null,
-                'delivery_term' => $data['delivery_term'] ?? null,
-                'warranty_term' => $data['warranty_term'] ?? null,
-                'notes' => $data['notes'] ?? null,
+                'expiration_date' => $data['expiration_date'] ?? now()->addDays(15)->toDateString(),
+                'payment_method' => $data['payment_method'] ?? $company->default_payment_method,
+                'delivery_term' => $data['delivery_term'] ?? $company->default_delivery_term,
+                'warranty_term' => $data['warranty_term'] ?? $company->default_warranty_term,
+                'notes' => $data['notes'] ?? $company->default_notes,
+                'installation_address' => $data['installation_address'] ?? null,
                 'public_token' => $publicToken,
             ]);
 
@@ -97,6 +100,7 @@ class BudgetService
                 'delivery_term' => $data['delivery_term'] ?? $budget->delivery_term,
                 'warranty_term' => $data['warranty_term'] ?? $budget->warranty_term,
                 'notes' => $data['notes'] ?? $budget->notes,
+                'installation_address' => $data['installation_address'] ?? $budget->installation_address,
             ]);
 
             // Sync items (delete and recreate)
