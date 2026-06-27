@@ -42,11 +42,11 @@ export default class ErrorBoundary extends Component<Props, State> {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white mb-2">Algo deu errado</h2>
-            <p className="text-sm text-slate-400 max-w-md">
+            <p className="text-sm text-muted-foreground max-w-md">
               Ocorreu um erro inesperado na aplicação. Tente recarregar a página ou entre em contato com o suporte.
             </p>
             {this.state.error && (
-              <p className="mt-3 text-xs text-slate-500 font-mono bg-slate-900/50 rounded-lg p-3 max-w-md break-all">
+              <p className="mt-3 text-xs text-muted-foreground/80 font-mono bg-muted/50 rounded-lg p-3 max-w-md break-all">
                 {this.state.error.message}
               </p>
             )}

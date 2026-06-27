@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '../schemas/login';
 import { useAuth } from '../hooks/useAuth';
 
 export default function LoginPage() {
   const { login, isLoggingIn, loginError } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -27,7 +30,7 @@ export default function LoginPage() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-white">Entrar</h2>
-        <p className="mt-1 text-sm text-gray-400">Acesse sua conta</p>
+        <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta</p>
       </div>
 
       {loginError && (
@@ -38,7 +41,7 @@ export default function LoginPage() {
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-300">
+          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
             E-mail
           </label>
           <input
@@ -46,7 +49,7 @@ export default function LoginPage() {
             type="email"
             autoComplete="email"
             {...register('email')}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input bg-input px-4 py-2.5 text-white placeholder-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="seu@email.com"
           />
           {errors.email && (
@@ -55,17 +58,27 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-300">
+          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
             Senha
           </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            {...register('password')}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              {...register('password')}
+              className="w-full rounded-lg border border-input bg-input px-4 py-2.5 pr-10 text-white placeholder-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white cursor-pointer"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.password && (
             <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
           )}

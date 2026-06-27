@@ -56,18 +56,43 @@ export interface GlassType {
   updated_at: string;
 }
 
+export interface ProductCategory {
+  id: string;
+  company_id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: string;
   company_id: string;
   name: string;
   description: string | null;
+  code: string | null;
+  category_id: string | null;
+  category?: ProductCategory;
+  image_path: string | null;
   default_line_id: string | null;
   default_line?: ProductLine;
   pricing_type: 'fixed' | 'per_m2' | 'per_meter' | 'per_kg';
-  base_price: string; // Decimal returned as string from API
+  unit: 'piece' | 'm2' | 'linear_meter' | 'kg' | 'pair' | 'set';
+  base_price: string;
+  cost_price: string | null;
   requires_dimensions: boolean;
   min_width: number | null;
   min_height: number | null;
+  max_width: number | null;
+  max_height: number | null;
+  default_weight: string | null;
+  default_profile_color_id: string | null;
+  default_profile_color?: ProductColor;
+  default_accessory_color_id: string | null;
+  default_accessory_color?: ProductColor;
+  default_glass_type_id: string | null;
+  default_glass_type?: GlassType;
   active: boolean;
   created_at: string;
   updated_at: string;
@@ -93,6 +118,7 @@ export interface BudgetItem {
   width: number | null;
   height: number | null;
   calculated_area: string | null;
+  weight: string | null;
   line_id: string | null;
   line?: ProductLine;
   profile_color_id: string | null;
@@ -141,6 +167,7 @@ export interface Budget {
   warranty_term: string | null;
   notes: string | null;
   public_token: string;
+  items_count?: number;
   items?: BudgetItem[];
   status_histories?: BudgetStatusHistory[];
   created_at: string;

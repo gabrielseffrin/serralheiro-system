@@ -12,6 +12,7 @@ use App\Modules\Companies\Controllers\CompanyLogoController;
 use App\Modules\Companies\Controllers\DestroyCompanyLogoController;
 use App\Modules\Customers\Controllers\CustomerController;
 use App\Modules\Products\Controllers\GlassTypeController;
+use App\Modules\Products\Controllers\ProductCategoryController;
 use App\Modules\Products\Controllers\ProductColorController;
 use App\Modules\Products\Controllers\ProductController;
 use App\Modules\Products\Controllers\ProductLineController;
@@ -55,6 +56,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::apiResource('product-lines', ProductLineController::class);
     Route::apiResource('product-colors', ProductColorController::class);
     Route::apiResource('glass-types', GlassTypeController::class);
+    Route::apiResource('product-categories', ProductCategoryController::class);
 
     // Product routes
     Route::apiResource('products', ProductController::class);

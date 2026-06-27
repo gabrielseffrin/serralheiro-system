@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react';
+import type { ToastVariant } from '@/components/Toast';
 
 export function useToast(duration = 3000) {
   const [message, setMessage] = useState<string | null>(null);
+  const [variant, setVariant] = useState<ToastVariant>('success');
 
   const showToast = useCallback(
-    (msg: string) => {
+    (msg: string, toastVariant: ToastVariant = 'success') => {
       setMessage(msg);
+      setVariant(toastVariant);
       setTimeout(() => setMessage(null), duration);
     },
     [duration]
@@ -15,5 +18,5 @@ export function useToast(duration = 3000) {
     setMessage(null);
   }, []);
 
-  return { message, showToast, dismissToast };
+  return { message, variant, showToast, dismissToast };
 }

@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
         <h2 className="text-xl font-semibold text-white">E-mail enviado</h2>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.
         </p>
         <Link
@@ -53,13 +53,13 @@ export default function ForgotPasswordPage() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-white">Recuperar senha</h2>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Informe seu e-mail para receber o link de redefinição
         </p>
       </div>
 
       <div>
-        <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-300">
+        <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
           E-mail
         </label>
         <input
@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
           type="email"
           autoComplete="email"
           {...register('email')}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-input bg-input px-4 py-2.5 text-white placeholder-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder="seu@email.com"
         />
         {errors.email && (

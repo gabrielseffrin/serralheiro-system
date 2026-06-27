@@ -1,3 +1,10 @@
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 /**
  * Formata um valor numérico como moeda brasileira (BRL).
  */
@@ -27,4 +34,4 @@ export function formatDate(dateString: string | null | undefined): string {
  * Estilo base reutilizável para inputs de formulário.
  */
 export const inputStyle =
-  'w-full rounded-xl border border-slate-800 bg-slate-900/50 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200';
+  'w-full rounded-xl border border-input bg-input/50 px-3.5 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200';
