@@ -3,6 +3,7 @@ import { budgetsApi } from '@/services/budgets';
 import { Link } from 'react-router-dom';
 import { formatPrice, formatDate } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
+import { KpiSkeleton, TableSkeleton } from '@/components/TableSkeleton';
 import { 
   FileText, 
   CheckCircle, 
@@ -30,9 +31,9 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[50vh] flex-col items-center justify-center gap-3 text-slate-400">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500"></div>
-        Carregando indicadores do painel...
+      <div className="space-y-8">
+        <KpiSkeleton />
+        <TableSkeleton rows={5} cols={4} />
       </div>
     );
   }
@@ -54,8 +55,8 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome Header */}
       <div>
-        <h2 className="text-3xl font-extrabold text-white tracking-tight">Painel de Controle</h2>
-        <p className="mt-1.5 text-sm text-slate-450">
+        <h2 className="text-3xl font-extrabold text-foreground tracking-tight">Painel de Controle</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Acompanhe o faturamento, conversão de propostas e funil de vendas em tempo real.
         </p>
       </div>
@@ -63,27 +64,27 @@ export default function DashboardPage() {
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Metric 1: Total Orçado */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 hover:border-blue-900/40 hover:bg-slate-900/60 transition-all duration-300 relative group overflow-hidden">
+        <div className="rounded-2xl border border-border/80 bg-card/40 p-6 hover:border-blue-900/40 hover:bg-card/60 transition-all duration-300 relative group overflow-hidden">
           <div className="absolute inset-0 bg-radial from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex items-center justify-between relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Total Orçado</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Orçado</span>
             <div className="rounded-xl bg-blue-500/10 p-2 text-blue-400 border border-blue-500/10">
               <FileText className="h-4.5 w-4.5" />
             </div>
           </div>
-          <p className="mt-4 text-2.5xl font-black text-white font-mono tracking-tight relative z-10">
+          <p className="mt-4 text-2.5xl font-black text-foreground font-mono tracking-tight relative z-10">
             {formatPrice(stats.total_value)}
           </p>
-          <p className="mt-1.5 text-xs text-slate-500 relative z-10">
+          <p className="mt-1.5 text-xs text-muted-foreground/80 relative z-10">
             {stats.total_count} {stats.total_count === 1 ? 'proposta emitida' : 'propostas emitidas'}
           </p>
         </div>
 
         {/* Metric 2: Aprovados */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 hover:border-emerald-900/40 hover:bg-slate-900/60 transition-all duration-300 relative group overflow-hidden">
+        <div className="rounded-2xl border border-border/80 bg-card/40 p-6 hover:border-emerald-900/40 hover:bg-card/60 transition-all duration-300 relative group overflow-hidden">
           <div className="absolute inset-0 bg-radial from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex items-center justify-between relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Aprovados</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Aprovados</span>
             <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-400 border border-emerald-500/10">
               <CheckCircle className="h-4.5 w-4.5" />
             </div>
@@ -91,16 +92,16 @@ export default function DashboardPage() {
           <p className="mt-4 text-2.5xl font-black text-emerald-400 font-mono tracking-tight relative z-10">
             {formatPrice(stats.approved_value)}
           </p>
-          <p className="mt-1.5 text-xs text-slate-500 relative z-10">
+          <p className="mt-1.5 text-xs text-muted-foreground/80 relative z-10">
             {stats.approved_count} {stats.approved_count === 1 ? 'proposta fechada' : 'propostas fechadas'}
           </p>
         </div>
 
         {/* Metric 3: Pendentes */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 hover:border-amber-900/40 hover:bg-slate-900/60 transition-all duration-300 relative group overflow-hidden">
+        <div className="rounded-2xl border border-border/80 bg-card/40 p-6 hover:border-amber-900/40 hover:bg-card/60 transition-all duration-300 relative group overflow-hidden">
           <div className="absolute inset-0 bg-radial from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex items-center justify-between relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Em Aberto</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Em Aberto</span>
             <div className="rounded-xl bg-amber-500/10 p-2 text-amber-400 border border-amber-500/10">
               <Clock className="h-4.5 w-4.5" />
             </div>
@@ -108,29 +109,30 @@ export default function DashboardPage() {
           <p className="mt-4 text-2.5xl font-black text-amber-500 font-mono tracking-tight relative z-10">
             {formatPrice(stats.pending_value)}
           </p>
-          <p className="mt-1.5 text-xs text-slate-500 relative z-10">
+          <p className="mt-1.5 text-xs text-muted-foreground/80 relative z-10">
             {stats.pending_count} {stats.pending_count === 1 ? 'proposta pendente' : 'propostas pendentes'}
           </p>
         </div>
 
         {/* Metric 4: Conversão (Circular design) */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 hover:border-purple-900/40 hover:bg-slate-900/60 transition-all duration-300 relative group overflow-hidden flex items-center justify-between">
+        <div className="rounded-2xl border border-border/80 bg-card/40 p-6 hover:border-purple-900/40 hover:bg-card/60 transition-all duration-300 relative group overflow-hidden flex items-center justify-between">
           <div className="absolute inset-0 bg-radial from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-450 block">Conversão</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Conversão</span>
             <p className="mt-2 text-3xl font-black text-purple-400 font-mono tracking-tight">
               {stats.conversion_rate}%
             </p>
-            <p className="mt-1 text-[11px] text-slate-500">Taxa de fechamento</p>
+            <p className="mt-1 text-[11px] text-muted-foreground/80">Taxa de fechamento</p>
           </div>
 
           <div className="relative h-18 w-18 flex items-center justify-center z-10">
-            <svg className="h-full w-full -rotate-90">
+            <svg className="h-full w-full -rotate-90" role="img" aria-label={`Taxa de conversão: ${stats.conversion_rate}%`}>
+              <title>{`Taxa de conversão: ${stats.conversion_rate}%`}</title>
               <circle
                 cx="36"
                 cy="36"
                 r={strokeRadius}
-                className="stroke-slate-800"
+                className="stroke-muted"
                 strokeWidth="6"
                 fill="transparent"
               />
@@ -146,7 +148,7 @@ export default function DashboardPage() {
                 strokeLinecap="round"
               />
             </svg>
-            <div className="absolute text-slate-450">
+            <div className="absolute text-muted-foreground">
               <Percent className="h-4 w-4" />
             </div>
           </div>
@@ -156,15 +158,15 @@ export default function DashboardPage() {
       {/* Grid: Recent activity and actions */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left: Recent Budgets Table */}
-        <div className="rounded-2xl border border-slate-800/85 bg-slate-900/30 p-6 lg:col-span-2 space-y-4">
+        <div className="rounded-2xl border border-border/85 bg-card/30 p-6 lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-white">Últimos Orçamentos</h3>
-              <p className="text-xs text-slate-500">Atividades recentes registradas no sistema</p>
+              <h3 className="text-lg font-bold text-foreground">Últimos Orçamentos</h3>
+              <p className="text-xs text-muted-foreground/80">Atividades recentes registradas no sistema</p>
             </div>
             <Link 
               to="/budgets" 
-              className="rounded-lg border border-slate-800 hover:bg-slate-800 text-xs text-blue-400 hover:text-blue-300 font-semibold px-3 py-1.5 transition-all flex items-center gap-1 cursor-pointer"
+              className="rounded-lg border border-border hover:bg-muted text-xs text-blue-400 hover:text-blue-300 font-semibold px-3 py-1.5 transition-all flex items-center gap-1 cursor-pointer"
             >
               Ver Todos <ArrowUpRight className="h-3 w-3" />
             </Link>
@@ -172,13 +174,13 @@ export default function DashboardPage() {
 
           <div className="overflow-x-auto">
             {stats.recent.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center text-slate-500">
+              <div className="flex h-48 flex-col items-center justify-center text-muted-foreground/80">
                 <p className="text-sm">Nenhum orçamento cadastrado recentemente.</p>
               </div>
             ) : (
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-950/40 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+                  <tr className="bg-muted/40 text-muted-foreground uppercase font-bold text-xs tracking-wider border-b border-border">
                     <th className="px-4 py-3">Código / Versão</th>
                     <th className="px-4 py-3">Cliente</th>
                     <th className="px-4 py-3">Data</th>
@@ -186,21 +188,21 @@ export default function DashboardPage() {
                     <th className="px-4 py-3 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-850 text-slate-300">
+                <tbody className="divide-y divide-border text-foreground">
                   {stats.recent.map((budget) => {
                     return (
-                      <tr key={budget.id} className="hover:bg-slate-800/25 transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-white">
+                      <tr key={budget.id} className="hover:bg-muted/25 transition-colors">
+                        <td className="px-4 py-3 font-mono font-bold text-foreground">
                           <Link to={`/budgets/${budget.id}/edit`} className="hover:underline text-blue-450">
                             {budget.number_formatted} v{budget.version}
                           </Link>
                         </td>
-                        <td className="px-4 py-3 text-white max-w-[150px] truncate">{budget.customer_name || '-'}</td>
-                        <td className="px-4 py-3 text-slate-450">{formatDate(budget.created_at)}</td>
+                        <td className="px-4 py-3 text-foreground max-w-[150px] truncate">{budget.customer_name || '-'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{formatDate(budget.created_at)}</td>
                         <td className="px-4 py-3">
                           <StatusBadge status={budget.status} />
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-white font-bold">
+                        <td className="px-4 py-3 text-right font-mono text-foreground font-bold">
                           {formatPrice(budget.total)}
                         </td>
                       </tr>
@@ -213,10 +215,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Right: Quick actions panel */}
-        <div className="rounded-2xl border border-slate-800/85 bg-slate-900/30 p-6 space-y-6 flex flex-col justify-between">
+        <div className="rounded-2xl border border-border/85 bg-card/30 p-6 space-y-6 flex flex-col justify-between">
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white">Atalhos Rápidos</h3>
-            <p className="text-xs text-slate-500">Crie ou gerencie dados essenciais em poucos cliques</p>
+            <h3 className="text-lg font-bold text-foreground">Atalhos Rápidos</h3>
+            <p className="text-xs text-muted-foreground/80">Crie ou gerencie dados essenciais em poucos cliques</p>
           </div>
           
           <div className="grid grid-cols-1 gap-4 flex-1 mt-4">
@@ -235,36 +237,36 @@ export default function DashboardPage() {
 
             <Link
               to="/customers"
-              className="flex items-center gap-4 rounded-xl bg-slate-900/50 hover:bg-slate-800/70 p-4 transition-all border border-slate-800 text-white group active:scale-[0.99]"
+              className="flex items-center gap-4 rounded-xl bg-card/50 hover:bg-muted/70 p-4 transition-all border border-border text-foreground group active:scale-[0.99]"
             >
-              <div className="rounded-xl bg-slate-800 group-hover:bg-slate-700 p-2.5 text-slate-400 group-hover:text-white transition-colors">
+              <div className="rounded-xl bg-muted group-hover:bg-accent p-2.5 text-muted-foreground group-hover:text-foreground transition-colors">
                 <Users className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-sm font-bold">Cadastrar Cliente</p>
-                <p className="text-[11px] text-slate-500">Adicione contatos e leads</p>
+                <p className="text-[11px] text-muted-foreground/80">Adicione contatos e leads</p>
               </div>
             </Link>
 
             <Link
               to="/products"
-              className="flex items-center gap-4 rounded-xl bg-slate-900/50 hover:bg-slate-800/70 p-4 transition-all border border-slate-800 text-white group active:scale-[0.99]"
+              className="flex items-center gap-4 rounded-xl bg-card/50 hover:bg-muted/70 p-4 transition-all border border-border text-foreground group active:scale-[0.99]"
             >
-              <div className="rounded-xl bg-slate-800 group-hover:bg-slate-700 p-2.5 text-slate-400 group-hover:text-white transition-colors">
+              <div className="rounded-xl bg-muted group-hover:bg-accent p-2.5 text-muted-foreground group-hover:text-foreground transition-colors">
                 <Package className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-sm font-bold">Catálogo de Esquadrias</p>
-                <p className="text-[11px] text-slate-500">Gerencie modelos e preços</p>
+                <p className="text-[11px] text-muted-foreground/80">Gerencie modelos e preços</p>
               </div>
             </Link>
           </div>
 
-          <div className="rounded-xl border border-slate-800/60 bg-slate-950/40 p-4 mt-6 flex items-center gap-3">
+          <div className="rounded-xl border border-border/60 bg-muted/40 p-4 mt-6 flex items-center gap-3">
             <div className="rounded-lg bg-blue-500/10 p-2 text-blue-400">
               <TrendingUp className="h-4 w-4" />
             </div>
-            <p className="text-[11px] text-slate-500 leading-normal">
+            <p className="text-[11px] text-muted-foreground/80 leading-normal">
               Dica: Mantenha seus catálogos de linhas e vidros atualizados para agilizar o preenchimento de propostas comerciais.
             </p>
           </div>

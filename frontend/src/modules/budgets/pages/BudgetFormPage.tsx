@@ -293,9 +293,23 @@ export default function BudgetFormPage() {
 
   if (isEditMode && loadingBudget) {
     return (
-      <div className="flex h-[50vh] flex-col items-center justify-center gap-3 text-slate-400">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500"></div>
-        Carregando detalhes do orçamento...
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <div className="flex items-center gap-4">
+          <div className="h-9 w-9 rounded-xl bg-muted animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-7 w-64 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-48 bg-muted rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border/80 bg-card/20 p-6 space-y-4">
+              <div className="h-5 w-1/3 bg-muted rounded animate-pulse" />
+              <div className="h-10 w-full bg-muted rounded animate-pulse" />
+              <div className="h-10 w-2/3 bg-muted rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -303,14 +317,14 @@ export default function BudgetFormPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-4">
-        <Link to="/budgets" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors">
+        <Link to="/budgets" className="rounded-xl border border-border bg-card/50 hover:bg-muted p-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4.5 w-4.5" />
         </Link>
         <div>
-          <h2 className="text-2.5xl font-black text-white tracking-tight">
+          <h2 className="text-2.5xl font-black text-foreground tracking-tight">
             {isEditMode ? `Editar Orçamento ${budget?.number_formatted}` : 'Novo Orçamento'}
           </h2>
-          <p className="text-sm text-slate-450">
+          <p className="text-sm text-muted-foreground">
             {isEditMode
               ? `Editando a versão ${budget?.version} do orçamento comercial.`
               : 'Preencha as informações do cliente, monte o catálogo de esquadrias e crie a proposta.'}
@@ -322,7 +336,7 @@ export default function BudgetFormPage() {
         <div className="rounded-xl border border-amber-800 bg-amber-950/20 p-4 text-sm text-amber-400 flex items-start gap-3 shadow-md animate-scale-up">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 animate-pulse" />
           <div>
-            <strong className="font-bold block text-white mb-0.5">Orçamento Não Editável</strong>
+            <strong className="font-bold block text-foreground mb-0.5">Orçamento Não Editável</strong>
             Este orçamento está com status <span className="font-semibold uppercase text-amber-300">"{STATUS_LABELS[budget?.status || ''] || budget?.status}"</span> e não pode ser modificado. Para fazer alterações, retorne à lista de orçamentos e crie uma <strong>"Nova Versão"</strong> para obter um rascunho atualizado.
           </div>
         </div>
@@ -334,14 +348,14 @@ export default function BudgetFormPage() {
         </div>
       )}
 
-      <div className="border-b border-slate-800/80 flex gap-2 overflow-x-auto pb-px">
+      <div className="border-b border-border/80 flex gap-2 overflow-x-auto pb-px">
         <button
           type="button"
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
             activeTab === 'general'
               ? 'border-blue-500 text-blue-400'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              : 'border-transparent text-muted-foreground hover:text-foreground/80'
           }`}
         >
           <User className="h-4 w-4" /> 1. Cliente & Validade
@@ -352,7 +366,7 @@ export default function BudgetFormPage() {
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
             activeTab === 'items'
               ? 'border-blue-500 text-blue-400'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              : 'border-transparent text-muted-foreground hover:text-foreground/80'
           }`}
         >
           <Ruler className="h-4 w-4" /> 2. Esquadrias (Itens)
@@ -363,7 +377,7 @@ export default function BudgetFormPage() {
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
             activeTab === 'terms'
               ? 'border-blue-500 text-blue-400'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              : 'border-transparent text-muted-foreground hover:text-foreground/80'
           }`}
         >
           <CreditCard className="h-4 w-4" /> 3. Prazos & Condições
@@ -374,16 +388,16 @@ export default function BudgetFormPage() {
         <div className="lg:col-span-2 space-y-6">
           
           {activeTab === 'general' && (
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-6 space-y-6 animate-fade-in">
-              <h3 className="text-md font-bold text-white border-b border-slate-800/60 pb-2 flex items-center gap-2">
+            <div className="rounded-2xl border border-border/80 bg-card/20 p-6 space-y-6 animate-fade-in">
+              <h3 className="text-md font-bold text-foreground border-b border-border/60 pb-2 flex items-center gap-2">
                 <User className="h-4 w-4 text-blue-500" /> Identificação do Cliente
               </h3>
               
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Cliente Comercial *</label>
+                <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Cliente Comercial *</label>
                 <select
                   {...register('customer_id')}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2.5 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 >
                   <option value="">Selecione um cliente cadastrado</option>
                   {customers.map((c) => (
@@ -396,11 +410,11 @@ export default function BudgetFormPage() {
               </div>
 
               <div className="pt-2">
-                <label className="mb-1.5 block text-xs font-semibold text-slate-400">Validade da Proposta</label>
+                <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Validade da Proposta</label>
                 <input
                   type="date"
                   {...register('expiration_date')}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2.5 text-sm text-foreground focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -420,10 +434,10 @@ export default function BudgetFormPage() {
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-md font-bold text-white flex items-center gap-2">
+                  <h3 className="text-md font-bold text-foreground flex items-center gap-2">
                     <Ruler className="h-4 w-4 text-blue-500" /> Itens Inclusos
                   </h3>
-                  <p className="text-xs text-slate-500">Configure dimensões e acabamentos das peças</p>
+                  <p className="text-xs text-muted-foreground/80">Configure dimensões e acabamentos das peças</p>
                 </div>
                 <button
                   type="button"
@@ -466,27 +480,27 @@ export default function BudgetFormPage() {
                 return (
                   <div
                     key={field.id}
-                    className="rounded-2xl border border-slate-850 bg-slate-900/30 p-5 space-y-4 relative hover:border-slate-800 transition-colors animate-scale-up"
+                    className="rounded-2xl border border-border bg-card/30 p-5 space-y-4 relative hover:border-border transition-colors animate-scale-up"
                   >
                     <button
                       type="button"
                       onClick={() => remove(index)}
                       disabled={fields.length === 1}
-                      className="absolute top-4 right-4 text-slate-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      className="absolute top-4 right-4 text-muted-foreground/80 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                       title="Remover Item"
                     >
                       <Trash2 className="h-4.5 w-4.5" />
                     </button>
 
-                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Item #{index + 1}</span>
+                    <span className="text-xs font-black text-blue-500 uppercase tracking-widest">Item #{index + 1}</span>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-2">
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Esquadria / Modelo *</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Esquadria / Modelo *</label>
                         <select
                           {...register(`items.${index}.product_id`)}
                           onChange={(e) => handleProductChange(index, e.target.value)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                          className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none cursor-pointer"
                         >
                           <option value="">Selecione um produto do catálogo</option>
                           {products.map((p) => (
@@ -496,65 +510,65 @@ export default function BudgetFormPage() {
                           ))}
                         </select>
                         {isProductInactive && (
-                          <p className="mt-1 text-[10px] text-amber-400 font-semibold flex items-center gap-1">
+                          <p className="mt-1 text-xs text-amber-400 font-semibold flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" /> Este produto está inativo e não pode ser selecionado em novos orçamentos.
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Quantidade *</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Quantidade *</label>
                         <input
                           type="number"
                           {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                     </div>
 
                     {requiresDims && (
-                      <div className={`grid gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850 ${selectedProduct?.pricing_type === 'per_kg' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}>
+                      <div className={`grid gap-4 bg-muted/40 p-4 rounded-xl border border-border ${selectedProduct?.pricing_type === 'per_kg' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}>
                         <div>
-                          <label className="mb-1 block text-[11px] font-semibold text-slate-400">Largura (mm) *</label>
+                          <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Largura (mm) *</label>
                           <input
                             type="number"
                             {...register(`items.${index}.width`, { valueAsNumber: true })}
                             placeholder="Ex: 1200"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                           />
                           {selectedProduct?.min_width != null && (
-                            <span className="text-[10px] text-slate-550 block mt-1">Largura Mínima: {selectedProduct.min_width}mm</span>
+                            <span className="text-xs text-muted-foreground/60 block mt-1">Largura Mínima: {selectedProduct.min_width}mm</span>
                           )}
                           {selectedProduct?.max_width != null && (
-                            <span className="text-[10px] text-slate-550 block mt-0.5">Largura Máxima: {selectedProduct.max_width}mm</span>
+                            <span className="text-xs text-muted-foreground/60 block mt-0.5">Largura Máxima: {selectedProduct.max_width}mm</span>
                           )}
                         </div>
                         <div>
-                          <label className="mb-1 block text-[11px] font-semibold text-slate-400">Altura (mm) *</label>
+                          <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Altura (mm) *</label>
                           <input
                             type="number"
                             {...register(`items.${index}.height`, { valueAsNumber: true })}
                             placeholder="Ex: 1500"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                           />
                           {selectedProduct?.min_height != null && (
-                            <span className="text-[10px] text-slate-550 block mt-1">Altura Mínima: {selectedProduct.min_height}mm</span>
+                            <span className="text-xs text-muted-foreground/60 block mt-1">Altura Mínima: {selectedProduct.min_height}mm</span>
                           )}
                           {selectedProduct?.max_height != null && (
-                            <span className="text-[10px] text-slate-550 block mt-0.5">Altura Máxima: {selectedProduct.max_height}mm</span>
+                            <span className="text-xs text-muted-foreground/60 block mt-0.5">Altura Máxima: {selectedProduct.max_height}mm</span>
                           )}
                         </div>
                         {selectedProduct?.pricing_type === 'per_kg' && (
                           <div>
-                            <label className="mb-1 block text-[11px] font-semibold text-slate-400">Peso Total (kg) *</label>
+                            <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Peso Total (kg) *</label>
                             <input
                               type="number"
                               step="0.001"
                               {...register(`items.${index}.weight`, { valueAsNumber: true })}
                               placeholder="Ex: 15.5"
-                              className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                              className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                             />
-                            <span className="text-[10px] text-slate-550 block mt-1">
+                            <span className="text-xs text-muted-foreground/60 block mt-1">
                               Preço Base: R$ {parseFloat(selectedProduct.base_price).toFixed(2)}/kg
                             </span>
                           </div>
@@ -564,55 +578,55 @@ export default function BudgetFormPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Sigla / Tag</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Sigla / Tag</label>
                         <input
                           type="text"
                           {...register(`items.${index}.tag`)}
                           placeholder="Ex: P01, J03"
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-400">Ambiente de Instalação</label>
+                        <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Ambiente de Instalação</label>
                         <input
                           type="text"
                           {...register(`items.${index}.location`)}
                           placeholder="Ex: Suíte, Sala de Estar"
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-input bg-input px-2.5 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450 flex items-center gap-1">
+                        <label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
                           <Calendar className="h-3 w-3" /> Prazo de Entrega do Item
                         </label>
                         <input
                           type="date"
                           {...register(`items.${index}.delivery_date`)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-input bg-input px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450 flex items-center gap-1">
+                        <label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
                           <FileText className="h-3 w-3" /> Observações do Item
                         </label>
                         <input
                           type="text"
                           {...register(`items.${index}.notes`)}
                           placeholder="Ex: Usar parafuso M6, incluir vedação"
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-input bg-input px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/10 p-3.5 rounded-xl border border-slate-850/60">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-card/10 p-3.5 rounded-xl border border-border/60">
                       <div>
-                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450">Linha</label>
+                        <label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">Linha</label>
                         <select
                           {...register(`items.${index}.line_id`)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                          className="w-full rounded-lg border border-input bg-input px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none cursor-pointer"
                         >
                           <option value="">Nenhuma</option>
                           {lines.map((l) => (
@@ -623,14 +637,14 @@ export default function BudgetFormPage() {
 
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="block text-[11px] font-semibold text-slate-455">Cor Perfil</label>
+                          <label className="block text-[11px] font-semibold text-muted-foreground">Cor Perfil</label>
                           {pColor?.hex && (
-                            <span className="h-3 w-3 rounded-full border border-slate-700" style={{ backgroundColor: pColor.hex }} />
+                            <span className="h-3 w-3 rounded-full border border-input" style={{ backgroundColor: pColor.hex }} />
                           )}
                         </div>
                         <select
                           {...register(`items.${index}.profile_color_id`)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                          className="w-full rounded-lg border border-input bg-input px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none cursor-pointer"
                         >
                           <option value="">Nenhuma</option>
                           {profileColors.map((c) => (
@@ -640,10 +654,10 @@ export default function BudgetFormPage() {
                       </div>
 
                       <div>
-                        <label className="mb-1.5 block text-[11px] font-semibold text-slate-450">Vidro</label>
+                        <label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">Vidro</label>
                         <select
                           {...register(`items.${index}.glass_type_id`)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                          className="w-full rounded-lg border border-input bg-input px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none cursor-pointer"
                         >
                           <option value="">Nenhum</option>
                           {glassTypes.map((g) => (
@@ -654,14 +668,14 @@ export default function BudgetFormPage() {
 
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="block text-[11px] font-semibold text-slate-455">Cor Acessório</label>
+                          <label className="block text-[11px] font-semibold text-muted-foreground">Cor Acessório</label>
                           {aColor?.hex && (
-                            <span className="h-3 w-3 rounded-full border border-slate-700" style={{ backgroundColor: aColor.hex }} />
+                            <span className="h-3 w-3 rounded-full border border-input" style={{ backgroundColor: aColor.hex }} />
                           )}
                         </div>
                         <select
                           {...register(`items.${index}.accessory_color_id`)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-850 px-2 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none cursor-pointer"
+                          className="w-full rounded-lg border border-input bg-input px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none cursor-pointer"
                         >
                           <option value="">Nenhuma</option>
                           {accessoryColors.map((c) => (
@@ -671,29 +685,29 @@ export default function BudgetFormPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-slate-800/80">
-                      <div className="flex gap-4 text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-border/80">
+                      <div className="flex gap-4 text-[11px] text-muted-foreground/80 font-semibold uppercase tracking-wider">
                         {calculations.area > 0 && (
-                          <p>Área: <span className="text-white font-mono">{calculations.area.toFixed(4)} m²</span></p>
+                          <p>Área: <span className="text-foreground font-mono">{calculations.area.toFixed(4)} m²</span></p>
                         )}
-                        <p>Unitário Base: <span className="text-white font-mono">{formatCurrency(calculations.unit_price)}</span></p>
+                        <p>Unitário Base: <span className="text-foreground font-mono">{formatCurrency(calculations.unit_price)}</span></p>
                       </div>
 
                       <div className="flex items-center gap-3 justify-end flex-1">
                         {selectedProduct?.pricing_type === 'fixed' && (
                           <div className="flex items-center gap-1.5">
-                            <label className="text-[10px] text-slate-450 uppercase font-bold whitespace-nowrap">Preço de Ajuste (R$):</label>
+                            <label className="text-xs text-muted-foreground uppercase font-bold whitespace-nowrap">Preço de Ajuste (R$):</label>
                             <input
                               type="number"
                               step="0.0001"
                               {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
-                              className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1 text-xs text-white w-24 text-right focus:border-blue-500 focus:outline-none font-mono"
+                              className="rounded-lg border border-input bg-background px-2.5 py-1 text-xs text-foreground w-24 text-right focus:border-blue-500 focus:outline-none font-mono"
                             />
                           </div>
                         )}
                         <div className="text-right">
-                          <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Total Item: </span>
-                          <strong className="text-sm font-bold text-white font-mono">{formatCurrency(calculations.total)}</strong>
+                          <span className="text-[11px] text-muted-foreground/80 font-semibold uppercase tracking-wider">Total Item: </span>
+                          <strong className="text-sm font-bold text-foreground font-mono">{formatCurrency(calculations.total)}</strong>
                         </div>
                       </div>
                     </div>
@@ -705,7 +719,7 @@ export default function BudgetFormPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('general')}
-                  className="rounded-xl bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                  className="rounded-xl bg-muted hover:bg-accent text-foreground px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                 >
                   <ChevronLeft className="h-4 w-4" /> Voltar
                 </button>
@@ -721,56 +735,56 @@ export default function BudgetFormPage() {
           )}
 
           {activeTab === 'terms' && (
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-6 space-y-4 animate-fade-in">
-              <h3 className="text-md font-bold text-white border-b border-slate-800/60 pb-2 flex items-center gap-2">
+            <div className="rounded-2xl border border-border/80 bg-card/20 p-6 space-y-4 animate-fade-in">
+              <h3 className="text-md font-bold text-foreground border-b border-border/60 pb-2 flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-blue-500" /> Condições Comerciais
               </h3>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-400">Forma de Pagamento</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Forma de Pagamento</label>
                 <input
                   type="text"
                   {...register('payment_method')}
                   placeholder="Ex: 50% de entrada, 50% na conclusão da instalação"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-400">Prazo de Entrega</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Prazo de Entrega</label>
                 <input
                   type="text"
                   {...register('delivery_term')}
                   placeholder="Ex: 30 dias úteis a partir da medição final"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-400">Termo de Garantia</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Termo de Garantia</label>
                 <input
                   type="text"
                   {...register('warranty_term')}
                   placeholder="Ex: 1 ano para acessórios, 5 anos para perfis"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-400">Notas de Proposta (PDF)</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Notas de Proposta (PDF)</label>
                 <textarea
                   rows={4}
                   {...register('notes')}
                   placeholder="Observações que constarão no final do documento comercial PDF..."
-                  className="w-full rounded-xl border border-slate-700 bg-slate-850 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-input bg-input px-3 py-2 text-xs text-foreground focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-slate-800/80">
+              <div className="flex justify-between pt-4 border-t border-border/80">
                 <button
                   type="button"
                   onClick={() => setActiveTab('items')}
-                  className="rounded-xl bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                  className="rounded-xl bg-muted hover:bg-accent text-foreground px-5 py-2.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                 >
                   <ChevronLeft className="h-4 w-4" /> Voltar
                 </button>
@@ -782,31 +796,31 @@ export default function BudgetFormPage() {
 
         <div className="lg:sticky lg:top-20 space-y-6">
           
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-6 shadow-xl">
-            <h3 className="text-md font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
+          <div className="rounded-2xl border border-border bg-card p-6 space-y-6 shadow-xl">
+            <h3 className="text-md font-bold text-foreground border-b border-border pb-2 flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-blue-500" /> Resumo Financeiro
             </h3>
 
             <div className="space-y-4 font-mono text-xs">
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-muted-foreground">
                 <span className="font-sans font-medium">Subtotal dos Itens:</span>
-                <span className="text-white font-bold">{formatCurrency(subtotal)}</span>
+                <span className="text-foreground font-bold">{formatCurrency(subtotal)}</span>
               </div>
 
               <div>
-                <label className="mb-1 block font-sans text-xs font-semibold text-slate-400">Desconto Comercial (R$)</label>
+                <label className="mb-1 block font-sans text-xs font-semibold text-muted-foreground">Desconto Comercial (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   {...register('discount', { valueAsNumber: true })}
-                  className="w-full font-mono rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none text-right"
+                  className="w-full font-mono rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-blue-500 focus:outline-none text-right"
                   placeholder="0,00"
                 />
                 {errors.discount && <p className="mt-1 text-xs text-red-400 font-sans">{errors.discount.message}</p>}
               </div>
 
-              <div className="border-t border-slate-850 pt-4 flex justify-between text-sm font-bold">
-                <span className="font-sans text-slate-350">Total Líquido:</span>
+              <div className="border-t border-border pt-4 flex justify-between text-sm font-bold">
+                <span className="font-sans text-foreground/80">Total Líquido:</span>
                 <span className="text-emerald-400 font-black text-base">{formatCurrency(grandTotal)}</span>
               </div>
             </div>
@@ -815,7 +829,7 @@ export default function BudgetFormPage() {
           <div className="flex gap-4">
             <Link
               to="/budgets"
-              className="flex-1 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-800 px-4 py-3 text-xs font-bold text-slate-300 hover:text-white transition-all text-center cursor-pointer"
+              className="flex-1 rounded-xl bg-input hover:bg-muted border border-border px-4 py-3 text-xs font-bold text-foreground hover:text-foreground transition-all text-center cursor-pointer"
             >
               Cancelar
             </Link>
