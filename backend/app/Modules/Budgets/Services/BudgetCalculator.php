@@ -74,10 +74,24 @@ class BudgetCalculator
     public static function recalculateBudget(Budget $budget): void
     {
         $subtotal = 0.00;
+        $totalGlassArea = 0.0;
+        $totalWeight = 0.0;
+        $hasGlass = false;
+        $hasWeight = false;
 
         foreach ($budget->items as $item) {
             /** @var BudgetItem $item */
             $subtotal += (float) $item->total;
+
+            if ($item->glass_type_id && $item->calculated_area) {
+                $totalGlassArea += (float) $item->calculated_area;
+                $hasGlass = true;
+            }
+
+            if ($item->weight) {
+                $totalWeight += (float) $item->weight;
+                $hasWeight = true;
+            }
         }
 
         $discount = (float) $budget->discount;
@@ -86,6 +100,8 @@ class BudgetCalculator
         $budget->update([
             'subtotal' => round($subtotal, 2),
             'total' => round($total, 2),
+            'total_glass_area' => $hasGlass ? round($totalGlassArea, 4) : null,
+            'total_weight' => $hasWeight ? round($totalWeight, 3) : null,
         ]);
     }
 }

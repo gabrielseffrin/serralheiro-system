@@ -31,12 +31,20 @@ class Budget extends Model
         'subtotal',
         'discount',
         'total',
+        'total_glass_area',
+        'total_weight',
         'expiration_date',
         'payment_method',
         'delivery_term',
         'warranty_term',
         'notes',
+        'installation_address',
         'public_token',
+        'approved_at',
+        'approved_ip',
+        'rejected_at',
+        'rejected_ip',
+        'signer_name',
     ];
 
     protected $casts = [
@@ -44,6 +52,10 @@ class Budget extends Model
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
+        'total_glass_area' => 'decimal:4',
+        'total_weight' => 'decimal:3',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function newUniqueId(): string
