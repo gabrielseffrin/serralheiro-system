@@ -12,6 +12,11 @@ use Illuminate\Http\Response;
 
 class ProductLineController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(ProductLine::class, 'product_line');
+    }
+
     public function index(): AnonymousResourceCollection
     {
         $lines = ProductLine::all();

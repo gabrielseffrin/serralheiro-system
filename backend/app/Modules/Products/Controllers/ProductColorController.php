@@ -13,6 +13,11 @@ use Illuminate\Http\Response;
 
 class ProductColorController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(ProductColor::class, 'product_color');
+    }
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = ProductColor::query();
