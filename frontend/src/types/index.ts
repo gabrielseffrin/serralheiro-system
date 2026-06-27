@@ -161,12 +161,18 @@ export interface Budget {
   subtotal: string;
   discount: string;
   total: string;
+  total_glass_area: string | null;
+  total_weight: string | null;
   expiration_date: string | null;
   payment_method: string | null;
   delivery_term: string | null;
   warranty_term: string | null;
   notes: string | null;
+  installation_address: string | null;
   public_token: string;
+  approved_at: string | null;
+  rejected_at: string | null;
+  signer_name: string | null;
   items_count?: number;
   items?: BudgetItem[];
   status_histories?: BudgetStatusHistory[];

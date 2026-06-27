@@ -18,6 +18,7 @@ import {
   Trash2,
   Download,
   Link2,
+  Send,
   Settings,
   AlertCircle,
   MoreVertical,
@@ -47,6 +48,9 @@ export default function BudgetsPage() {
   const [statusNotes, setStatusNotes] = useState('');
 
   const [budgetToDelete, setBudgetToDelete] = useState<{ id: string; code: string } | null>(null);
+
+  // Share modal state
+  const [sharingBudget, setSharingBudget] = useState<Budget | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['budgets', currentPage],
@@ -113,6 +117,14 @@ export default function BudgetsPage() {
     }).catch(() => {
       showToast('Erro ao copiar o link.', 'error');
     });
+  };
+
+  const handleShareWhatsApp = (budget: Budget) => {
+    const publicUrl = `${window.location.origin}/p/${budget.public_token}`;
+    const message = encodeURIComponent(
+      `Olá ${budget.customer?.name || ''}, segue a proposta comercial ${budget.number_formatted}.\n\n${publicUrl}`
+    );
+    window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
   const handleDownloadPdf = async (id: string, code: string, version: number) => {
@@ -296,6 +308,9 @@ export default function BudgetsPage() {
                             <DropdownMenuItem onClick={() => handleCopyLink(budget.public_token)}>
                               <Link2 className="h-4 w-4" /> Copiar Link Público
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSharingBudget(budget)}>
+                              <Send className="h-4 w-4" /> Enviar para Cliente
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDownloadPdf(budget.id, budget.number_formatted, budget.version)} disabled={downloadingId === budget.id}>
                               {downloadingId === budget.id ? (
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-emerald-500" />
@@ -396,6 +411,57 @@ export default function BudgetsPage() {
         }}
         onCancel={() => setBudgetToDelete(null)}
       />
+
+      {/* Share / Send to Client Modal */}
+      <Modal
+        isOpen={sharingBudget !== null}
+        onClose={() => setSharingBudget(null)}
+        title="Enviar Proposta para o Cliente"
+        description="Compartilhe o link da proposta com o cliente via WhatsApp ou copie o link."
+        maxWidth="max-w-md"
+      >
+        {sharingBudget && (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Link da Proposta</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/p/${sharingBudget.public_token}`}
+                  className="flex-1 rounded-xl border border-input bg-input px-3 py-2 text-sm text-foreground"
+                />
+                <button
+                  onClick={() => handleCopyLink(sharingBudget.public_token)}
+                  className="rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-bold text-white transition-all cursor-pointer"
+                >
+                  Copiar
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleShareWhatsApp(sharingBudget)}
+                className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-3 text-sm font-bold text-white transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Send className="h-4 w-4" /> Abrir no WhatsApp
+              </button>
+              <button
+                onClick={() => handleDownloadPdf(sharingBudget.id, sharingBudget.number_formatted, sharingBudget.version)}
+                disabled={downloadingId === sharingBudget.id}
+                className="flex-1 rounded-xl bg-muted hover:bg-accent px-4 py-3 text-sm font-bold text-foreground transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" /> Baixar PDF
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground/60 text-center">
+              O cliente poderá visualizar, baixar o PDF e aprovar ou rejeitar a proposta pelo link.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

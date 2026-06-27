@@ -55,13 +55,13 @@ export const budgetsApi = {
     return data;
   },
 
-  approvePublic: async (token: string, notes?: string): Promise<{ data: Budget }> => {
-    const { data } = await api.post<{ data: Budget }>(`/public/budgets/${token}/approve`, { notes });
+  approvePublic: async (token: string, notes?: string, signerName?: string): Promise<{ data: Budget }> => {
+    const { data } = await api.post<{ data: Budget }>(`/public/budgets/${token}/approve`, { notes, signer_name: signerName });
     return data;
   },
 
-  rejectPublic: async (token: string, notes?: string): Promise<{ data: Budget }> => {
-    const { data } = await api.post<{ data: Budget }>(`/public/budgets/${token}/reject`, { notes });
+  rejectPublic: async (token: string, notes?: string, signerName?: string): Promise<{ data: Budget }> => {
+    const { data } = await api.post<{ data: Budget }>(`/public/budgets/${token}/reject`, { notes, signer_name: signerName });
     return data;
   },
 
@@ -76,5 +76,9 @@ export const budgetsApi = {
     const { data } = await api.get(`/public/budgets/${token}/pdf`, { responseType: 'blob' });
     return data;
   },
-};
 
+  listByCustomer: async (customerId: string, page = 1): Promise<PaginatedResponse<Budget>> => {
+    const { data } = await api.get<PaginatedResponse<Budget>>(`/customers/${customerId}/budgets?page=${page}`);
+    return data;
+  },
+};
