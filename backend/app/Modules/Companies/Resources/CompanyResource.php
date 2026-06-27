@@ -21,7 +21,7 @@ class CompanyResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'address' => $this->address,
-            'logo' => $this->logo ? asset('storage/'.$this->logo) : null,
+            'logo' => $this->logo ? config('app.url').'/storage/'.$this->logo : null,
             'default_notes' => $this->default_notes,
             'default_payment_method' => $this->default_payment_method,
             'default_delivery_term' => $this->default_delivery_term,

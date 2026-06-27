@@ -5,11 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { customersApi } from '@/services/customers';
 import { customerSchema, type CustomerFormData } from '../schemas/customer';
 import type { Customer } from '@/types';
-import { 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Loader2, 
+import {
+  Plus,
+  Pencil,
+  Trash2,
   AlertCircle
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -19,6 +18,7 @@ import Pagination from '@/components/Pagination';
 import Modal from '@/components/Modal';
 import { useToast } from '@/hooks/useToast';
 import { inputStyle } from '@/lib/utils';
+import { TableSkeleton } from '@/components/TableSkeleton';
 
 export default function CustomersPage() {
   const queryClient = useQueryClient();
@@ -27,7 +27,7 @@ export default function CustomersPage() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { message: successMsg, showToast } = useToast();
+  const { message: successMsg, variant, showToast } = useToast();
 
   // Fetch customers
   const { data, isLoading, isError } = useQuery({
@@ -154,8 +154,8 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Clientes</h2>
-          <p className="mt-1.5 text-sm text-slate-450">Gerencie o cadastro de clientes e parceiros da sua serralheria.</p>
+          <h2 className="text-3xl font-extrabold text-foreground tracking-tight">Clientes</h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">Gerencie o cadastro de clientes e parceiros da sua serralheria.</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -166,12 +166,12 @@ export default function CustomersPage() {
       </div>
 
       {/* Success Notification */}
-      <Toast message={successMsg} />
+      <Toast message={successMsg} variant={variant} />
 
       {/* Filter and Table */}
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/30 overflow-hidden">
+      <div className="rounded-2xl border border-border/80 bg-card/30 overflow-hidden">
         {/* Toolbar */}
-        <div className="border-b border-slate-800/60 p-4">
+        <div className="border-b border-border/60 p-4">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
@@ -182,18 +182,15 @@ export default function CustomersPage() {
         {/* Table */}
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex h-48 flex-col items-center justify-center gap-3 text-slate-455">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              Carregando clientes...
-            </div>
+            <TableSkeleton rows={5} cols={5} />
           ) : filteredCustomers.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center text-slate-400 text-center p-6">
-              <p className="text-lg font-bold text-white">Nenhum cliente cadastrado</p>
-              <p className="text-sm text-slate-500 mt-1">Clique em "Novo Cliente" para começar.</p>
+            <div className="flex h-48 flex-col items-center justify-center text-muted-foreground text-center p-6">
+              <p className="text-lg font-bold text-foreground">Nenhum cliente cadastrado</p>
+              <p className="text-sm text-muted-foreground/80 mt-1">Clique em "Novo Cliente" para começar.</p>
             </div>
           ) : (
-            <table className="w-full border-collapse text-left text-sm text-slate-350">
-              <thead className="bg-slate-950/40 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+            <table className="w-full border-collapse text-left text-sm text-foreground/80">
+              <thead className="bg-muted/40 text-muted-foreground uppercase font-bold text-xs tracking-wider border-b border-border">
                 <tr>
                   <th className="px-6 py-4">Nome</th>
                   <th className="px-6 py-4">Contato</th>
@@ -202,31 +199,31 @@ export default function CustomersPage() {
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850 text-slate-300">
+              <tbody className="divide-y divide-border text-foreground">
                 {filteredCustomers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-slate-800/25 transition-colors">
-                    <td className="px-6 py-4 font-bold text-white">{customer.name}</td>
+                  <tr key={customer.id} className="hover:bg-muted/25 transition-colors">
+                    <td className="px-6 py-4 font-bold text-foreground">{customer.name}</td>
                     <td className="px-6 py-4">
                       <div className="space-y-0.5">
-                        {customer.phone && <p className="text-white font-mono text-xs">{customer.phone}</p>}
-                        {customer.email && <p className="text-xs text-slate-450">{customer.email}</p>}
-                        {!customer.phone && !customer.email && <span className="text-xs text-slate-600">-</span>}
+                        {customer.phone && <p className="text-foreground font-mono text-xs">{customer.phone}</p>}
+                        {customer.email && <p className="text-xs text-muted-foreground">{customer.email}</p>}
+                        {!customer.phone && !customer.email && <span className="text-xs text-muted-foreground/50">-</span>}
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-400">{customer.document || '-'}</td>
-                    <td className="px-6 py-4 max-w-xs truncate text-slate-400">{customer.address || '-'}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{customer.document || '-'}</td>
+                    <td className="px-6 py-4 max-w-xs truncate text-muted-foreground">{customer.address || '-'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-1.5">
                         <button
                           onClick={() => openEditModal(customer)}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+                          className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
                           title="Editar"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(customer)}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors cursor-pointer"
+                          className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-red-400 transition-colors cursor-pointer"
                           title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -259,7 +256,7 @@ export default function CustomersPage() {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Nome ou Razão Social *</label>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome ou Razão Social *</label>
             <input
               type="text"
               {...register('name')}
@@ -271,7 +268,7 @@ export default function CustomersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Telefone</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefone</label>
               <input
                 type="text"
                 {...register('phone')}
@@ -280,7 +277,7 @@ export default function CustomersPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">CPF / CNPJ</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">CPF / CNPJ</label>
               <input
                 type="text"
                 {...register('document')}
@@ -291,9 +288,9 @@ export default function CustomersPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">E-mail</label>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</label>
             <input
-              type="text"
+              type="email"
               {...register('email')}
               className={inputStyle}
               placeholder="email@exemplo.com"
@@ -302,7 +299,7 @@ export default function CustomersPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Endereço Completo</label>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Endereço Completo</label>
             <input
               type="text"
               {...register('address')}
@@ -312,7 +309,7 @@ export default function CustomersPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Anotações Internas</label>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Anotações Internas</label>
             <textarea
               rows={3}
               {...register('notes')}
@@ -321,11 +318,11 @@ export default function CustomersPage() {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={closeModal}
-              className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
+              className="rounded-xl border border-border bg-card/50 hover:bg-muted px-4 py-2.5 text-sm font-semibold text-foreground hover:text-foreground transition-all cursor-pointer"
             >
               Cancelar
             </button>

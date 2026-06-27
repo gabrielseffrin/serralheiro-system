@@ -44,7 +44,7 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-xs animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -52,10 +52,10 @@ export default function Modal({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className={`w-full ${maxWidth} rounded-2xl border border-slate-800 bg-slate-900/95 p-6 shadow-2xl relative max-h-[95vh] overflow-y-auto animate-scale-up text-slate-100`}>
+      <div className={`w-full ${maxWidth} rounded-2xl border border-border bg-card/95 p-6 shadow-2xl relative max-h-[95vh] overflow-y-auto animate-scale-up text-foreground`}>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+          className="absolute top-4 right-4 rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
           aria-label="Fechar"
         >
           <X className="h-4.5 w-4.5" />
@@ -65,7 +65,7 @@ export default function Modal({
           {title}
         </h3>
         {description && (
-          <p className="text-xs text-slate-450 mb-6">{description}</p>
+          <p className="text-xs text-muted-foreground mb-6">{description}</p>
         )}
 
         {children}

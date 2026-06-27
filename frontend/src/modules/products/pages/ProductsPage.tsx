@@ -9,7 +9,6 @@ import {
   Plus, 
   Pencil, 
   Trash2, 
-  Loader2, 
   AlertCircle
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -19,6 +18,7 @@ import Pagination from '@/components/Pagination';
 import Modal from '@/components/Modal';
 import { useToast } from '@/hooks/useToast';
 import { formatPrice, inputStyle } from '@/lib/utils';
+import { TableSkeleton } from '@/components/TableSkeleton';
 
 const PRICING_TYPES: Record<Product['pricing_type'], string> = {
   fixed: 'Valor Fixo',
@@ -43,7 +43,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { message: successMsg, showToast } = useToast();
+  const { message: successMsg, variant, showToast } = useToast();
 
   const { data: productsData, isLoading, isError } = useQuery({
     queryKey: ['products', currentPage],
@@ -267,8 +267,8 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Produtos e Modelos</h2>
-          <p className="mt-1.5 text-sm text-slate-450">Gerencie a tabela de esquadrias e serviços disponíveis para orçar.</p>
+          <h2 className="text-3xl font-extrabold text-foreground tracking-tight">Produtos e Modelos</h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">Gerencie a tabela de esquadrias e serviços disponíveis para orçar.</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -278,10 +278,10 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      <Toast message={successMsg} />
+      <Toast message={successMsg} variant={variant} />
 
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/30 overflow-hidden">
-        <div className="border-b border-slate-800/60 p-4">
+      <div className="rounded-2xl border border-border/80 bg-card/30 overflow-hidden">
+        <div className="border-b border-border/60 p-4">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
@@ -291,18 +291,15 @@ export default function ProductsPage() {
 
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex h-48 flex-col items-center justify-center gap-3 text-slate-455">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              Carregando produtos...
-            </div>
+            <TableSkeleton rows={5} cols={5} />
           ) : filteredProducts.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center text-slate-400 text-center p-6">
-              <p className="text-lg font-bold text-white">Nenhum produto cadastrado</p>
-              <p className="text-sm text-slate-500 mt-1">Clique em "Novo Produto" para começar.</p>
+            <div className="flex h-48 flex-col items-center justify-center text-muted-foreground text-center p-6">
+              <p className="text-lg font-bold text-foreground">Nenhum produto cadastrado</p>
+              <p className="text-sm text-muted-foreground/80 mt-1">Clique em "Novo Produto" para começar.</p>
             </div>
           ) : (
-            <table className="w-full border-collapse text-left text-sm text-slate-350">
-              <thead className="bg-slate-950/40 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+            <table className="w-full border-collapse text-left text-sm text-foreground/80">
+              <thead className="bg-muted/40 text-muted-foreground uppercase font-bold text-xs tracking-wider border-b border-border">
                 <tr>
                   <th className="px-6 py-4">Código</th>
                   <th className="px-6 py-4">Produto</th>
@@ -314,23 +311,23 @@ export default function ProductsPage() {
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850 text-slate-300">
+              <tbody className="divide-y divide-border text-foreground">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-slate-800/25 transition-colors">
+                  <tr key={product.id} className="hover:bg-muted/25 transition-colors">
                     <td className="px-6 py-4">
                       {product.code ? (
-                        <span className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-mono font-bold text-slate-300">
+                        <span className="rounded-lg bg-muted border border-input px-2 py-0.5 text-xs font-mono font-bold text-foreground">
                           {product.code}
                         </span>
                       ) : (
-                        <span className="text-slate-600">-</span>
+                        <span className="text-muted-foreground/50">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-bold text-white">{product.name}</p>
+                        <p className="font-bold text-foreground">{product.name}</p>
                         {product.description && (
-                          <p className="text-xs text-slate-450 line-clamp-1 mt-0.5">{product.description}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{product.description}</p>
                         )}
                       </div>
                     </td>
@@ -340,7 +337,7 @@ export default function ProductsPage() {
                           {product.category.name}
                         </span>
                       ) : (
-                        <span className="text-slate-600">-</span>
+                        <span className="text-muted-foreground/50">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-xs font-bold">
@@ -349,22 +346,22 @@ export default function ProductsPage() {
                           {product.default_line.name}
                         </span>
                       ) : (
-                        <span className="text-slate-600">-</span>
+                        <span className="text-muted-foreground/50">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-400">
+                    <td className="px-6 py-4 text-xs text-muted-foreground">
                       <span>{PRICING_TYPES[product.pricing_type]}</span>
-                      <span className="text-slate-600 ml-1">({UNIT_LABELS[product.unit] || product.unit})</span>
+                      <span className="text-muted-foreground/50 ml-1">({UNIT_LABELS[product.unit] || product.unit})</span>
                     </td>
-                    <td className="px-6 py-4 font-mono text-sm font-bold text-white">
+                    <td className="px-6 py-4 font-mono text-sm font-bold text-foreground">
                       {formatPrice(product.base_price)}
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border ${
                           product.active 
                             ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30' 
-                            : 'bg-slate-800/40 text-slate-500 border-slate-750/30'
+                            : 'bg-muted/40 text-muted-foreground/80 border-border/30'
                         }`}
                       >
                         {product.active ? 'Ativo' : 'Inativo'}
@@ -374,14 +371,14 @@ export default function ProductsPage() {
                       <div className="flex justify-end gap-1.5">
                         <button
                           onClick={() => openEditModal(product)}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+                          className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
                           title="Editar"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(product)}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors cursor-pointer"
+                          className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-red-400 transition-colors cursor-pointer"
                           title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -414,7 +411,7 @@ export default function ProductsPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Nome do Produto *</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome do Produto *</label>
               <input
                 type="text"
                 {...register('name')}
@@ -424,7 +421,7 @@ export default function ProductsPage() {
               {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Código / SKU</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Código / SKU</label>
               <input
                 type="text"
                 {...register('code')}
@@ -437,28 +434,28 @@ export default function ProductsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Categoria</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Categoria</label>
               <select
                 {...register('category_id')}
                 className={`${inputStyle} cursor-pointer`}
               >
                 <option value="">Sem categoria</option>
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id} className="bg-slate-900">
+                  <option key={cat.id} value={cat.id} className="bg-card">
                     {cat.name}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Linha de Alumínio Padrão</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Linha de Alumínio Padrão</label>
               <select
                 {...register('default_line_id')}
                 className={`${inputStyle} cursor-pointer`}
               >
                 <option value="">Sem linha associada</option>
                 {lines.map((line) => (
-                  <option key={line.id} value={line.id} className="bg-slate-900">
+                  <option key={line.id} value={line.id} className="bg-card">
                     {line.name} {!line.active && '(Inativa)'}
                   </option>
                 ))}
@@ -468,33 +465,33 @@ export default function ProductsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Precificação *</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Precificação *</label>
               <select
                 {...register('pricing_type')}
                 className={`${inputStyle} cursor-pointer`}
               >
-                <option value="fixed" className="bg-slate-900">Preço Fixo</option>
-                <option value="per_m2" className="bg-slate-900">Por Metro Quadrado (m²)</option>
-                <option value="per_meter" className="bg-slate-900">Por Metro Linear (m)</option>
-                <option value="per_kg" className="bg-slate-900">Por Peso (kg)</option>
+                <option value="fixed" className="bg-card">Preço Fixo</option>
+                <option value="per_m2" className="bg-card">Por Metro Quadrado (m²)</option>
+                <option value="per_meter" className="bg-card">Por Metro Linear (m)</option>
+                <option value="per_kg" className="bg-card">Por Peso (kg)</option>
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Unidade *</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Unidade *</label>
               <select
                 {...register('unit')}
                 className={`${inputStyle} cursor-pointer`}
               >
-                <option value="piece" className="bg-slate-900">Peça</option>
-                <option value="m2" className="bg-slate-900">Metro Quadrado (m²)</option>
-                <option value="linear_meter" className="bg-slate-900">Metro Linear (m)</option>
-                <option value="kg" className="bg-slate-900">Quilograma (kg)</option>
-                <option value="pair" className="bg-slate-900">Par</option>
-                <option value="set" className="bg-slate-900">Jogo</option>
+                <option value="piece" className="bg-card">Peça</option>
+                <option value="m2" className="bg-card">Metro Quadrado (m²)</option>
+                <option value="linear_meter" className="bg-card">Metro Linear (m)</option>
+                <option value="kg" className="bg-card">Quilograma (kg)</option>
+                <option value="pair" className="bg-card">Par</option>
+                <option value="set" className="bg-card">Jogo</option>
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Preço Base (R$) *</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Preço Base (R$) *</label>
               <input
                 type="number"
                 step="0.0001"
@@ -508,7 +505,7 @@ export default function ProductsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Preço de Custo (R$)</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Preço de Custo (R$)</label>
               <input
                 type="number"
                 step="0.0001"
@@ -519,7 +516,7 @@ export default function ProductsPage() {
               {errors.cost_price && <p className="mt-1 text-xs text-red-400">{errors.cost_price.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Peso Padrão (kg)</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Peso Padrão (kg)</label>
               <input
                 type="number"
                 step="0.001"
@@ -532,7 +529,7 @@ export default function ProductsPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Descrição Comercial</label>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Descrição Comercial</label>
             <textarea
               rows={2}
               {...register('description')}
@@ -544,97 +541,97 @@ export default function ProductsPage() {
           {/* Cores e Vidro Padrão */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Cor Perfil Padrão</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Cor Perfil Padrão</label>
               <select
                 {...register('default_profile_color_id')}
                 className={`${inputStyle} cursor-pointer`}
               >
                 <option value="">Nenhuma</option>
                 {profileColors.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
+                  <option key={c.id} value={c.id} className="bg-card">{c.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Cor Acessório Padrão</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Cor Acessório Padrão</label>
               <select
                 {...register('default_accessory_color_id')}
                 className={`${inputStyle} cursor-pointer`}
               >
                 <option value="">Nenhuma</option>
                 {accessoryColors.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
+                  <option key={c.id} value={c.id} className="bg-card">{c.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Vidro Padrão</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Vidro Padrão</label>
               <select
                 {...register('default_glass_type_id')}
                 className={`${inputStyle} cursor-pointer`}
               >
                 <option value="">Nenhum</option>
                 {glassTypes.map((g) => (
-                  <option key={g.id} value={g.id} className="bg-slate-900">{g.name}</option>
+                  <option key={g.id} value={g.id} className="bg-card">{g.name}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="border-t border-b border-slate-850 py-4 my-2 space-y-3">
+          <div className="border-t border-b border-border py-4 my-2 space-y-3">
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="req-dimensions"
                 {...register('requires_dimensions')}
-                className="rounded border-slate-800 bg-slate-900 text-blue-600 focus:ring-blue-500 h-4.5 w-4.5 cursor-pointer"
+                className="rounded border-border bg-card text-blue-600 focus:ring-blue-500 h-4.5 w-4.5 cursor-pointer"
               />
-              <label htmlFor="req-dimensions" className="text-xs font-bold uppercase tracking-wider text-slate-350 cursor-pointer">
+              <label htmlFor="req-dimensions" className="text-xs font-bold uppercase tracking-wider text-foreground/80 cursor-pointer">
                 Exige dimensões personalizadas no orçamento (Largura/Altura)
               </label>
             </div>
 
             {showDimensions && (
-              <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 animate-fade-in">
+              <div className="grid grid-cols-2 gap-4 bg-muted/40 p-4 rounded-xl border border-border/80 animate-fade-in">
                 <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Largura Mínima (mm)</label>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Largura Mínima (mm)</label>
                   <input
                     type="number"
                     {...register('min_width', { valueAsNumber: true })}
                     className={`${inputStyle} py-1.5 px-3`}
                     placeholder="Ex: 500"
                   />
-                  {errors.min_width && <p className="mt-1 text-[10px] text-red-400">{errors.min_width.message}</p>}
+                  {errors.min_width && <p className="mt-1 text-xs text-red-400">{errors.min_width.message}</p>}
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Altura Mínima (mm)</label>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Altura Mínima (mm)</label>
                   <input
                     type="number"
                     {...register('min_height', { valueAsNumber: true })}
                     className={`${inputStyle} py-1.5 px-3`}
                     placeholder="Ex: 600"
                   />
-                  {errors.min_height && <p className="mt-1 text-[10px] text-red-400">{errors.min_height.message}</p>}
+                  {errors.min_height && <p className="mt-1 text-xs text-red-400">{errors.min_height.message}</p>}
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Largura Máxima (mm)</label>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Largura Máxima (mm)</label>
                   <input
                     type="number"
                     {...register('max_width', { valueAsNumber: true })}
                     className={`${inputStyle} py-1.5 px-3`}
                     placeholder="Ex: 3000"
                   />
-                  {errors.max_width && <p className="mt-1 text-[10px] text-red-400">{errors.max_width.message}</p>}
+                  {errors.max_width && <p className="mt-1 text-xs text-red-400">{errors.max_width.message}</p>}
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-455">Altura Máxima (mm)</label>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Altura Máxima (mm)</label>
                   <input
                     type="number"
                     {...register('max_height', { valueAsNumber: true })}
                     className={`${inputStyle} py-1.5 px-3`}
                     placeholder="Ex: 2500"
                   />
-                  {errors.max_height && <p className="mt-1 text-[10px] text-red-400">{errors.max_height.message}</p>}
+                  {errors.max_height && <p className="mt-1 text-xs text-red-400">{errors.max_height.message}</p>}
                 </div>
               </div>
             )}
@@ -645,18 +642,18 @@ export default function ProductsPage() {
               type="checkbox"
               id="prod-active"
               {...register('active')}
-              className="rounded border-slate-800 bg-slate-900 text-blue-600 focus:ring-blue-500 h-4.5 w-4.5 cursor-pointer"
+              className="rounded border-border bg-card text-blue-600 focus:ring-blue-500 h-4.5 w-4.5 cursor-pointer"
             />
-            <label htmlFor="prod-active" className="text-xs font-bold uppercase tracking-wider text-slate-350 cursor-pointer">
+            <label htmlFor="prod-active" className="text-xs font-bold uppercase tracking-wider text-foreground/80 cursor-pointer">
               Produto ativo para novos orçamentos
             </label>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={closeModal}
-              className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
+              className="rounded-xl border border-border bg-card/50 hover:bg-muted px-4 py-2.5 text-sm font-semibold text-foreground hover:text-foreground transition-all cursor-pointer"
             >
               Cancelar
             </button>
